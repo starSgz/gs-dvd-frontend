@@ -107,3 +107,39 @@ export function getSkuSalesData(query) {
   })
 }
 
+// ========== 抖店相关接口 ==========
+
+// 获取抖店店铺列表
+export function getDdStoreList() {
+  return request({
+    url: '/dvd/dd/dashboard/store-list',
+    method: 'get'
+  })
+}
+
+// 获取抖店店铺TOP5
+export function getDdStoreTop5(query) {
+  return request({
+    url: '/dvd/dd/dashboard/store-top5',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取抖店概览指标
+export function getDdOverviewMetrics(query) {
+  return request({
+    url: '/dvd/dd/dashboard/overview-metrics',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取抖店今日小时趋势
+export function getDdHourlyTrend(query) {
+  return request({
+    url: '/dvd/dd/dashboard/hourly-trend',
+    method: 'get',
+    params: query
+  })
+}

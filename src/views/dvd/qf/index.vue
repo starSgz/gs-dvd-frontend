@@ -10,7 +10,7 @@
       <div class="header-glow"></div>
       
       <div class="header-title">
-        <h1>实时数据大屏</h1>
+        <h1>千帆实时数据大屏</h1>
         <!-- <div class="header-time">{{ currentTime }}</div> -->
       </div>
       <div class="header-controls">
@@ -294,7 +294,7 @@ import Screenfull from '@/components/Screenfull'
 import { useFullscreen } from '@vueuse/core'
 
 export default {
-  name: 'DvdDashboard',
+  name: 'DvdQfDashboard',
   components: {
     Screenfull
   },
@@ -328,6 +328,8 @@ export default {
       channelTab: 'sales',
       skuSalesData: [],
       refreshTimer: null,
+      resizeObserver: null, // ResizeObserver 实例
+      resizeTimeout: null, // 防抖定时器
     }
   },
   computed: {
@@ -381,12 +383,24 @@ export default {
     // 窗口大小改变自适应
     window.addEventListener('resize', this.handleResize)
 
+    // 使用 ResizeObserver 监听容器尺寸变化（响应侧边栏收缩/展开）
+    this.initResizeObserver()
+
     // 添加双击事件监听器，实现双击任意位置全屏
     document.addEventListener('dblclick', this.handleDoubleClick)
   },
   beforeUnmount() {
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer)
+    }
+    // 清理防抖定时器
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout)
+    }
+    // 断开 ResizeObserver
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect()
+      this.resizeObserver = null
     }
     // 移除双击事件监听器
     document.removeEventListener('dblclick', this.handleDoubleClick)
@@ -931,6 +945,24 @@ export default {
       }
       this.chartPlatformInstance.setOption(optCardClick, { notMerge: true })
     },
+    initResizeObserver() {
+      // 创建 ResizeObserver 监听容器尺寸变化
+      this.resizeObserver = new ResizeObserver((entries) => {
+        // 使用防抖，避免频繁触发 resize
+        if (this.resizeTimeout) {
+          clearTimeout(this.resizeTimeout)
+        }
+        this.resizeTimeout = setTimeout(() => {
+          this.handleResize()
+        }, 100) // 100ms 防抖延迟
+      })
+      
+      // 监听 dashboard-container 元素
+      const container = this.$el
+      if (container) {
+        this.resizeObserver.observe(container)
+      }
+    },
     handleResize() {
       const instances = ['chartGmvInstance', 'chartOrdersInstance', 'chartPlatformInstance']
       instances.forEach(name => {
@@ -978,8 +1010,8 @@ export default {
   background: #031B18 url('@/assets/bg/dvd-bg.png') no-repeat center center;
   background-size: cover;
   color: #fff;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1171,11 +1203,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 15px;
-  padding: 5px 8px;
+  margin-left: 10px;
+  padding: 4px 4px;
   cursor: pointer;
   transition: all 0.3s;
-  border-radius: 4px;
+  border-radius: 3px;
   background: rgba(0, 194, 194, 0.1);
   border: 1px solid rgba(0, 194, 194, 0.3);
 }
@@ -1183,21 +1215,21 @@ export default {
 .screenfull-wrapper:hover {
   background: rgba(0, 194, 194, 0.2);
   border-color: rgba(0, 194, 194, 0.6);
-  box-shadow: 0 0 10px rgba(0, 194, 194, 0.3);
+  box-shadow: 0 0 8px rgba(0, 194, 194, 0.3);
 }
 
 .screenfull-wrapper :deep(svg) {
   fill: #00c2c2 !important;
   color: #00c2c2 !important;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   transition: all 0.3s;
 }
 
 .screenfull-wrapper:hover :deep(svg) {
   fill: #00e5e5 !important;
   color: #00e5e5 !important;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 /* 时间选择器样式 */

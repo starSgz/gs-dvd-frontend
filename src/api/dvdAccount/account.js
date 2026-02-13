@@ -68,3 +68,21 @@ export function getDvdUserInfo() {
     method: 'get'
   })
 }
+
+// 发送身份验证码（短信/邮箱）
+export function sendVerifyCode(data) {
+  return request({
+    url: '/dvd/account/qrcode/send_code',
+    method: 'post',
+    data: data
+  })
+}
+
+// 提交身份验证码
+export function submitVerifyCode(data) {
+  return request({
+    url: '/dvd/account/qrcode/submit_code',
+    method: 'post',
+    data: data
+  })
+}

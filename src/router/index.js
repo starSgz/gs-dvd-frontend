@@ -47,19 +47,6 @@ export const constantRoutes = [
     component: () => import('@/views/register'),
     hidden: true
   },
-  // {
-  //   path: '/dvd/qf',
-  //   component: () => import('@/views/dvd/qf/index'),
-  //   hidden: true,
-  //   meta: { title: '数据大屏-小红书' }
-  // },
-  // {
-  //   path: '/dvd/qf/test',
-  //   component: () => import('@/views/dvd/qf/test'),
-  //   hidden: true,
-  //   meta: { title: '数据大屏-小红书1' }
-  // },
-
   {
     path: "/:pathMatch(.*)*",
     component: () => import('@/views/error/404'),

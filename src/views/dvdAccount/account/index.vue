@@ -212,6 +212,35 @@
         <div v-else style="padding: 50px; color: #f56c6c;">
           获取二维码失败，请重试
         </div>
+        
+        <!-- 验证码输入区域 -->
+        <div v-if="needVerify" style="margin-top: 20px;">
+          <el-alert type="warning" :closable="false" style="margin-bottom: 15px;">
+            <template #title>需要身份验证</template>
+          </el-alert>
+          <el-button 
+            type="primary" 
+            @click="handleSendVerifyCode" 
+            :loading="verifySending"
+            :disabled="verifyButtonDisabled"
+            style="width: 100%; margin-bottom: 10px;"
+          >
+            {{ verifyButtonDisabled ? '验证码已发送' : '发送验证码' }}
+          </el-button>
+          <el-input 
+            v-model="verifyCode" 
+            placeholder="请输入验证码"
+            maxlength="8"
+            style="margin-bottom: 10px;"
+          />
+          <el-button 
+            type="success" 
+            @click="handleSubmitVerifyCode"
+            style="width: 100%;"
+          >
+            提交验证码
+          </el-button>
+        </div>
       </div>
       <template #footer>
         <div class="dialog-footer">
@@ -224,7 +253,7 @@
 </template>
 
 <script setup name="DvdAccount">
-import { listAccount, getAccount, addAccount, updateAccount, delAccount, getQRCode, checkQRCodeStatus } from "@/api/dvdAccount/account";
+import { listAccount, getAccount, addAccount, updateAccount, delAccount, getQRCode, checkQRCodeStatus, sendVerifyCode, submitVerifyCode } from "@/api/dvdAccount/account";
 import { treeselect } from "@/api/dvdConfig/configMenu";
 
 const { proxy } = getCurrentInstance();
@@ -254,6 +283,15 @@ const qrcodePollingTimer = ref(null);
 const countdown = ref(120);
 const countdownTimer = ref(null);
 const currentAccount = ref(null);
+
+// 验证码相关
+const needVerify = ref(false);
+const verifyTicket = ref("");
+const verifyCookies = ref(null);
+const verifyCode = ref("");
+const verifySending = ref(false);
+const verifyButtonDisabled = ref(false);
+const verifyWays = ref([]);
 
 const data = reactive({
   form: {},
@@ -477,6 +515,13 @@ function startQRCodePolling(accountId) {
         proxy.$modal.msgSuccess("登录成功");
         qrcodeOpen.value = false;
         getList();
+      } else if (response.data.status === 'verify_code') {
+        // 需要身份验证
+        stopQRCodePolling();
+        needVerify.value = true;
+        verifyTicket.value = response.data.verifyTicket;
+        verifyCookies.value = response.data.cookies;
+        verifyWays.value = response.data.verifyWays || [];
       }
     }).catch(() => {
       // 检查失败，继续轮询
@@ -504,6 +549,60 @@ function handleQRCodeCancel() {
   qrcodeToken.value = "";
   countdown.value = 120;
   currentAccount.value = null;
+  resetVerifyState();
+}
+
+/** 发送验证码 */
+function handleSendVerifyCode() {
+  verifySending.value = true;
+  sendVerifyCode({
+    verifyTicket: verifyTicket.value,
+    cookies: verifyCookies.value,
+    accountId: currentAccount.value.id
+  }).then(response => {
+    proxy.$modal.msgSuccess("验证码已发送");
+    verifyButtonDisabled.value = true;
+  }).catch(() => {
+    proxy.$modal.msgError("发送验证码失败");
+  }).finally(() => {
+    verifySending.value = false;
+  });
+}
+
+/** 提交验证码 */
+function handleSubmitVerifyCode() {
+  if (!verifyCode.value) {
+    proxy.$modal.msgWarning("请输入验证码");
+    return;
+  }
+  
+  submitVerifyCode({
+    verifyCode: verifyCode.value,
+    verifyTicket: verifyTicket.value,
+    cookies: verifyCookies.value,
+    token: qrcodeToken.value,
+    accountId: currentAccount.value.id
+  }).then(response => {
+    if (response.data.status === 'success') {
+      proxy.$modal.msgSuccess("登录成功");
+      qrcodeOpen.value = false;
+      resetVerifyState();
+      getList();
+    }
+  }).catch(() => {
+    proxy.$modal.msgError("验证码错误或已失效");
+  });
+}
+
+/** 重置验证码状态 */
+function resetVerifyState() {
+  needVerify.value = false;
+  verifyTicket.value = "";
+  verifyCookies.value = null;
+  verifyCode.value = "";
+  verifyButtonDisabled.value = false;
+  verifySending.value = false;
+  verifyWays.value = [];
 }
 
 /** 平台改变时，过滤产品选项 */
