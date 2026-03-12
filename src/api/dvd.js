@@ -117,10 +117,10 @@ export function getDdStoreList() {
   })
 }
 
-// 获取抖店店铺TOP5
-export function getDdStoreTop5(query) {
+// 获取抖店店铺
+export function getDdStore(query) {
   return request({
-    url: '/dvd/dd/dashboard/store-top5',
+    url: '/dvd/dd/dashboard/real-time/store',
     method: 'get',
     params: query
   })
@@ -129,7 +129,7 @@ export function getDdStoreTop5(query) {
 // 获取抖店概览指标
 export function getDdOverviewMetrics(query) {
   return request({
-    url: '/dvd/dd/dashboard/overview-metrics',
+    url: '/dvd/dd/dashboard/real-time/overview-metrics',
     method: 'get',
     params: query
   })
@@ -138,7 +138,52 @@ export function getDdOverviewMetrics(query) {
 // 获取抖店今日小时趋势
 export function getDdHourlyTrend(query) {
   return request({
-    url: '/dvd/dd/dashboard/hourly-trend',
+    url: '/dvd/dd/dashboard/real-time/hourly-trend',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取地图地理聚合订单数据（支付金额 + 订单数，支持省/市/区下钻）
+export function getDdGeoOrderStats(query) {
+  return request({
+    url: '/dvd/dd/dashboard/geo-order-stats',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取抖店每日概览指标（支付金额、订单数、曝光等）
+export function getDdDailyOverviewMetrics(query) {
+  return request({
+    url: '/dvd/dd/dashboard/daily/overview-metrics',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取抖店每日订单列表（分页）
+export function getDdDailyOrderList(query) {
+  return request({
+    url: '/dvd/dd/dashboard/daily/order-list',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取商品曝光点击流量每日趋势（柱线混合图）
+export function getDdTrafficTrend(query) {
+  return request({
+    url: '/dvd/dd/dashboard/daily/traffic-trend',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取商品类目销售占比（商品名称 + 规格，玫瑰图）
+export function getDdCategoryStats(query) {
+  return request({
+    url: '/dvd/dd/dashboard/category-stats',
     method: 'get',
     params: query
   })

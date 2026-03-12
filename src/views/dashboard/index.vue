@@ -221,9 +221,16 @@ const pageSize = ref(10);
 const hasMore = ref(true);
 const totalCount = ref(0);
 
-// 判断用户是否已激活
+// 判断用户是否已激活（admin 始终激活；有 accessKey 且未过期才算激活）
 const isActivated = computed(() => {
-  return userStore.name === 'admin' || !!userStore.accessKey;
+  if (userStore.name === 'admin') return true;
+  if (!userStore.accessKey) return false;
+  // 有过期时间则判断是否已过期
+  if (userInfo.value.expireTime) {
+    return new Date(userInfo.value.expireTime) > new Date();
+  }
+  // userInfo 尚未加载完成时，先按有 accessKey 处理
+  return true;
 });
 
 // 动态问候语
@@ -354,7 +361,9 @@ const handleActivate = async () => {
     accessKeyInput.value = '';
     // 重新获取用户信息以更新激活状态
     await userStore.getInfo();
-    
+    // 先刷新 userInfo（含最新 expireTime），再判断激活状态，避免旧过期时间干扰
+    await loadUserInfo();
+
     // 激活成功后，动态生成并添加路由，实现响应式切换
     if (isActivated.value) {
       const accessRoutes = await permissionStore.generateRoutes();
@@ -363,9 +372,7 @@ const handleActivate = async () => {
           router.addRoute(route);
         }
       });
-      // 重新加载用户信息
-      await loadUserInfo();
-      ElMessage.success('已进入主界面');
+      ElMessage.success('激活成功');
     }
   } catch (error) {
     console.error('激活失败：', error);
@@ -449,9 +456,10 @@ const formatTime = (dateTime) => {
 };
 
 // 组件挂载时加载数据
-onMounted(() => {
+onMounted(async () => {
+  // 无论是否激活都先加载用户信息，以便正确判断过期状态
+  await loadUserInfo();
   if (isActivated.value) {
-    loadUserInfo();
     loadNoticeList();
   }
 });

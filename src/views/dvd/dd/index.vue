@@ -1,2026 +1,2424 @@
 <template>
-  <div class="dvd-screen">
-    <!-- 头部模块 -->
-    <header>
-      <div class="header-title">
-        <h1>抖店实时数据大屏</h1>
-        <!-- <div class="header-time">{{ currentTime }}</div> -->
-      </div>
-      
-      <!-- 右上角控件组 -->
-      <div class="header-controls">
+  <div class="dvd-wrapper">
+    <div class="head clearfix">
+      <h1 class="">抖店数据大屏</h1>
+      <div class="head-controls">
+        <div class="date-range-wrapper">
+          <el-date-picker
+            v-model="selectedDateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            size="small"
+            clearable
+            value-format="YYYY-MM-DD"
+            style="width: 240px"
+            @change="handleFilterChange"
+          />
+        </div>
         <div class="store-select-wrapper">
-          <el-select v-model="selectedStore" placeholder="选择店铺" size="small" clearable @change="handleStoreChange">
+          <el-select
+            v-model="selectedStore"
+            placeholder="选择店铺"
+            size="small"
+            clearable
+            style="width: 160px"
+            @change="handleFilterChange"
+          >
             <el-option label="全部店铺" :value="null" />
-            <el-option v-for="store in storeList" :key="store.id" :label="store.name" :value="store.id" />
+            <el-option
+              v-for="(store, index) in storeList"
+              :key="index"
+              :label="store.storeName"
+              :value="store.storeId"
+            />
           </el-select>
         </div>
-        <span class="control-item">CNY</span>
-        <div class="screenfull-wrapper">
-          <screenfull />
-        </div>
       </div>
-    </header>
-
-    <div class="main">
-      <!-- top5 -->
-      <div class="top5">
-        <div class="top5-title">
-          <span>店铺TOP5</span>
-          <div class="sort-switch">
-            <el-radio-group v-model="sortBy" size="small" @change="loadStoreTop5">
-              <el-radio-button label="amount">成交金额</el-radio-button>
-              <el-radio-button label="orders">订单数</el-radio-button>
-            </el-radio-group>
-          </div>
-        </div>
-        <div class="top5-content">
-          <ul ref="top5ListRef">
-            <li v-for="(item, index) in brandTop5" :key="index">
-              <div class="cicle"></div>
-              <div class="li-content">
-                <span>{{ item.name }}</span>
-                <span>{{ item.sales }}</span>
-                <!-- <span>{{ item.rate }}%</span> -->
-                <!-- <span><img :src="item.trend === 'up' ? upIcon : downIcon" alt="趋势图标"></span> -->
-              </div>
-            </li>
-          </ul>
-        </div>
-        <div class="top5-title">
-          <span>退款&投比</span>
-        </div>
-      </div>
-      <!-- 销售总额 -->
-      <div class="total" ref="totalRef">
-        <div class="data1">
-          <span>用户支付金额</span>
-          <p>{{ salesMetrics.payAmt }}</p>
-        </div>
-        <div class="data2">
-          <span>成交订单数</span>
-          <p>{{ salesMetrics.payCnt }}</p>
-        </div>
-        <div class="data3">
-          <span>商品曝光人数</span>
-          <p>{{ salesMetrics.productShowUcnt }}</p>
-        </div>
-        <div class="data4">
-          <span>退款金额(支付时间)</span>
-          <p>{{ salesMetrics.refundAmtPayTime }}</p>
-        </div>
-        <canvas class="rain" ref="rainRef"></canvas>
-        <canvas class="dashed" ref="dashedRef"></canvas>
-        <div class="sphere">
-          <div class="sphere-bg"></div>
-          <div class="sum">
-            <span>成交金额</span>
-            <p>{{ salesMetrics.incomeAmt }}</p>
-          </div>
-        </div>
-        <div class="cicle3"></div>
-        <div class="cicle4"></div>
-        <div class="cicle5"></div>
-        <div class="cicle6"></div>
-        <div class="cicle7"></div>
-        <div class="cicle8">
-          <span>{{ salesMetrics.metrics?.adCost }}</span>
-          <p>投放消耗</p>
-        </div>
-        <div class="cicle9">
-          <span>{{ salesMetrics.metrics?.perUsrPayAmt }}</span>
-          <p>客单价</p>
-        </div>
-        <div class="cicle10">
-          <span>{{ salesMetrics.metrics?.conversionRate }}%</span>
-          <p>转化率</p>
-        </div>
-
-      </div>
-      <!-- 销售分析 -->
-      <div class="analyse">
-        <div class="analyse-title">
-          <span>销售分析</span>
-        </div>
-        
-        <!-- <ul>
-          <li>
-            <img src="./images/s1.png" alt="会销目标">
-            <h5>会销目标</h5><br>
-            <span>Marketing Target</span><br>
-            <em>￥{{ meetingMetrics.target?.toLocaleString() }}</em>
-          </li>
-          <li>
-            <img src="./images/s3.png" alt="会销实际">
-            <h5>会销实际</h5><br>
-            <span>Marketing Actual</span><br>
-            <em>￥{{ meetingMetrics.actual?.toLocaleString() }}</em>
-          </li>
-          <li>
-            <img src="./images/s2.png" alt="会销占比">
-            <h5>会销占比</h5><br>
-            <span>Marketing Ratio</span><br>
-            <em>￥{{ meetingMetrics.ratio?.toLocaleString() }}</em>
-          </li> -->
-        <!-- </ul> -->
-        <div class="execution">
-          <div class="title">核心转化</div>
-          <div class="cicle1"></div>
-          <div class="cicle2"></div>
-          <div class="waterChart1">
-            <div class="chart-title">商品点击(成交转化率(次数))</div>
-            <div class="chart1" ref="chart1Ref"></div>
-          </div>
-          <div class="waterChart2">
-            <div class="chart-title">商品曝光(点击转化率)</div>
-            <div class="chart2" ref="chart2Ref"></div>
-          </div>
-        </div>
-      </div>
-      <div class="sale">
-        <ul>
-          <li>
-            <div class="showImg">
-              <img src="./images/shoe.png" alt="鞋类">
-            </div>
-            <div class="data">
-              <span>退款率</span>
-            </div>
-            <div class="shoeChart" ref="shoeChartRef"></div>
-          </li>
-          <li>
-            <div class="showImg">
-              <img src="./images/clothes.png" alt="服装">
-            </div>
-            <div class="data">
-              <span>投放费比</span>
-            </div>
-            <div class="clothesChart" ref="clothesChartRef"></div>
-          </li>
-          <!-- <li>
-            <div class="showImg">
-              <img src="./images/mz.png" alt="配饰">
-            </div>
-            <div class="data">
-              <span>配饰</span>
-              <span>{{ categoryMetrics.accessories?.count }}</span>
-            </div>
-            <div class="mzChart" ref="mzChartRef"></div>
-          </li> -->
-        </ul>
-      </div>
-      <!-- 柱状图 - 支出金额 -->
-      <div class="barChart" ref="barChartRef"></div>
-      <!-- 折线图 -->
-      <div class="lineChart" ref="lineChartRef"></div>
     </div>
+    <div class="mainbox">
+      <ul class="clearfix nav1">
+        <li style="width: 26%" class="col-left">
+          <div class="box overview-box">
+            <div class="tit"><span>当日情况</span><p></p></div>
+            <div class="boxnav">
+              <ul class="drqk clearfix">
+                <li>
+                  <div class="icon"><img src="./images/icona.png"></div>
+                  <div>
+                    <span>用户支付金额</span>
+                    <p><em>{{ fmtNum(overviewMetrics.payAmt, 2) }}</em><i>元</i></p>
+                  </div>
+                </li>
+                <li>
+                  <div class="icon"><img src="./images/iconb.png"></div>
+                  <div>
+                    <span>成交订单数</span>
+                    <p><em>{{ fmtNum(overviewMetrics.payCnt) }}</em><i>单</i></p>
+                  </div>
+                </li>
+                <li>
+                  <div class="icon"><img src="./images/iconc.png"></div>
+                  <div>
+                    <span>商品曝光人数</span>
+                    <p><em>{{ fmtNum(overviewMetrics.productShowUcnt) }}</em><i>人次</i></p>
+                  </div>
+                </li>
+                <li>
+                  <div class="icon"><img src="./images/icond.png"></div>
+                  <div>
+                    <span>退款订单数</span>
+                    <p><em>{{ fmtNum(overviewMetrics.refundOrderCntPayTime) }}</em><i>单</i></p>
+                  </div>
+                </li>
+                <li>
+                  <div class="icon"><img src="./images/icone.png"></div>
+                  <div>
+                    <span>客单价</span>
+                    <p><em>{{ fmtNum(overviewMetrics.perUsrPayAmt, 2) }}</em><i>元</i></p>
+                  </div>
+                </li>
+                <li>
+                  <div class="icon"><img src="./images/iconf.png"></div>
+                  <div>
+                    <span>转化率</span>
+                    <p><em>{{ overviewMetrics.conversionRate ?? '0.00' }}</em><i>%</i></p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="box rose-box">
+            <div class="tit"><span>类目销售占比</span><p></p></div>
+            <div class="rose-charts-wrap">
+              <div class="rose-item">
+                <div class="rose-sub-title">商品名称</div>
+                <div id="roseChart1" class="rose-chart-dom"></div>
+              </div>
+              <div class="rose-item">
+                <div class="rose-sub-title">商品规格</div>
+                <div id="roseChart2" class="rose-chart-dom"></div>
+              </div>
+            </div>
+          </div>
 
-    <!-- 底部模块 -->
-    <!-- <div class="bottom">
-      <h5><span>数据状况</span></h5>
-      <p>Data Status</p>
-    </div> -->
+        </li>
+        <li style="width:48%" class="traffic-col">
+          <div class="box map-box" style="position: relative">
+            <div class="" id="map" style="width: 100%; position: relative; z-index: 100">
+              
+            </div>
+            <div class="back-btn" v-show="parentInfo.length > 1" @click="goBack">返 回</div>
+            <div class="toggle-btn" @click="toggleMapMode">
+              {{ mapMode === 'amount' ? '销售额(元)' : '订单数(条)' }}
+            </div>
+            <div class="map">
+              <div class="map1"><img src="./images/lbx.png"></div>
+              <div class="map2"><img src="./images/jt.png"></div>
+              <div class="map3"><img src="./images/map.png"></div>
+
+            </div>
+          </div>
+            <div class="box traffic-box">
+              <div class="tit"><span>流量趋势</span><p></p></div>
+              <div id="trafficTrendChart" class="traffic-chart-dom"></div>
+            </div>
+        </li>
+        <li style="width: 26%" class="order-col">
+          <div class="box order-box">
+            <div class="tit"><span>订单信息</span><p></p></div>
+            <div class="order-scroll-wrap" @scroll="handleOrderScroll">
+              <div
+                v-for="order in orderList"
+                :key="order.id"
+                class="order-card"
+                @click="openOrderDetail(order.orderDetailUrl)"
+              >
+                <!-- 第一行：订单号 + 状态 -->
+                <div class="order-card-row order-card-top">
+                  <span class="order-no">{{ order.shopOrderId }}</span>
+                  <span :class="['order-status', getOrderStatusClass(order.orderStatusText)]">
+                    {{ order.orderStatusText || '—' }}
+                  </span>
+                </div>
+                <!-- 第二行：店铺名 -->
+                <div class="order-card-row">
+                  <span class="order-store-name">{{ order.storeName || '—' }}</span>
+                </div>
+                <!-- 第三行：商品名称 -->
+                <div class="order-card-row">
+                  <span class="order-product" :title="order.productName">
+                    {{ order.productName || '—' }}
+                  </span>
+                </div>
+                <!-- 第四行：规格 + 数量 -->
+                <div class="order-card-row order-card-sku">
+                  <span class="order-sku" :title="order.skuSpec">{{ order.skuSpec || '—' }}</span>
+                  <span class="order-count">×{{ order.totalProductCount ?? 1 }}</span>
+                </div>
+                <!-- 第五行：金额 + 下单时间 -->
+                <div class="order-card-row order-card-bottom">
+                  <span class="order-amount">¥{{ Number(order.actualPayAmount ?? 0).toFixed(2) }}</span>
+                  <span class="order-time">{{ formatOrderTime(order.createTime) }}</span>
+                </div>
+              </div>
+              <div v-if="orderLoading" class="order-tip">加载中...</div>
+              <div v-else-if="orderNoMore && orderList.length > 0" class="order-tip">— 已加载全部 —</div>
+              <div v-else-if="!orderLoading && orderList.length === 0" class="order-tip">暂无订单数据</div>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
+import mapJson from './js/china.json';
 import * as echarts from 'echarts';
-import 'echarts-liquidfill';
-import Screenfull from '@/components/Screenfull';
-import { getDdStoreList, getDdStoreTop5, getDdOverviewMetrics, getDdHourlyTrend } from '@/api/dvd';
-// 导入图片
-import upIcon from './images/up.png';
-import downIcon from './images/down.png';
+import { getDdGeoOrderStats, getDdStoreList, getDdDailyOrderList, getDdDailyOverviewMetrics, getDdCategoryStats, getDdTrafficTrend } from '@/api/dvd';
+let timer = null;
+let charts = [];
 
-// 导入边框图片
-import borderImg from './images/border.png';
-import border2Img from './images/border2.png';
-import orangeImg from './images/orange.png';
-import greenImg from './images/green.png';
+// 地图下钻状态
+// let parentInfo = [{ cityName: '全国', code: 100000 }];
+const parentInfo = ref([{ cityName: '全国', code: 100000 }]);
+let geoJson = {};
+let mapChart = null;
 
+// 地图展示模式：'amount' 销售额(元) | 'orders' 订单数(条)
+const mapMode = ref('amount');
+// 地理统计数据缓存（以地区名为 key）
+let geoStatsMap = {};
 
-// Refs
-const top5ListRef = ref(null);
-const totalRef = ref(null);
-const rainRef = ref(null);
-const dashedRef = ref(null);
-const chart1Ref = ref(null);
-const chart2Ref = ref(null);
-const shoeChartRef = ref(null);
-const clothesChartRef = ref(null);
-const mzChartRef = ref(null);
-const barChartRef = ref(null);
-const lineChartRef = ref(null);
+// 切换地图展示模式并重新渲染
+const toggleMapMode = () => {
+  mapMode.value = mapMode.value === 'amount' ? 'orders' : 'amount';
+  renderMap();
+};
 
-// State for cleanup
-let intervalId = null;
-let lineChartIntervalId = null;
-let rainAnimId = null;
-let resizeObserver = null;
-let resizeTimeout = null;
-const charts = [];
-
-// 响应式数据
+// ==================== 筛选条件 ====================
+// 日期范围：[startDate, endDate]，格式 'YYYY-MM-DD'
+const selectedDateRange = ref(null);
+// 当前选中的店铺 ID
 const selectedStore = ref(null);
-const sortBy = ref('amount'); // 排序方式：'amount'-成交金额，'orders'-订单数
-
 // 店铺列表
 const storeList = ref([]);
-
-// 数据状态
-const brandTop5 = ref([]);
-const salesMetrics = ref({
-  payAmt: 0,
-  payCnt: 0,
-  productShowUcnt: 0,
-  refundAmtPayTime: 0,
-  incomeAmt: 0,
-  metrics: { adCost: 0, perUsrPayAmt: 0, conversionRate: 0 }
-});
-const meetingMetrics = ref({
-  target: 0,
-  actual: 0,
-  ratio: 0,
-  productClickPayCntRatio: 0,
-  productShowClickCntRatio: 0
-});
-const categoryMetrics = ref({
-  refundAmtRate: { count: 52563, max: 65000 },
-  adExpenseRatioWithRefund: { count: 32563, max: 45000 },
-  accessories: { count: 12563, max: 35000 }
-});
-
-// TOP5 Color Loop
-const topColor = () => {
-  if (!top5ListRef.value) return;
-  const lis = top5ListRef.value.querySelectorAll('li');
-  const length = lis.length;
-  let i = 1;
-
-  // Initial state setup (match CSS/JS logic)
-  const updateStyles = (index) => {
-    lis.forEach((li, j) => {
-      const circle = li.querySelector('.cicle');
-      const content = li.querySelector('.li-content');
-      if (j === index) {
-        // 高亮项：使用 border2.png 和 orange.png
-        circle.style.background = `url(${orangeImg}) no-repeat center`;
-        circle.style.backgroundSize = '100%';
-        content.style.background = `url(${border2Img}) no-repeat center`;
-        content.style.backgroundSize = 'contain';
-      } else {
-        // 普通项：使用 border.png 和 green.png
-        circle.style.background = `url(${greenImg}) no-repeat center`;
-        circle.style.backgroundSize = '100%';
-        content.style.background = `url(${borderImg}) no-repeat center`;
-        content.style.backgroundSize = 'contain';
-      }
-    });
-  };
-
-  // Set initial
-  updateStyles(0);
-  
-  intervalId = setInterval(() => {
-    if (!top5ListRef.value) return; 
-    updateStyles(i);
-    i++;
-    if (i === length) {
-      i = 0;
-    }
-  }, 3000); // 每3秒切换
-};
-
-// Water Chart
-const initWaterChart = (dom, value) => {
-  if (!dom) return;
-  const myChart = echarts.init(dom);
-  charts.push(myChart);
-  
-  const option = {
-    series: [{
-      color: ['#09828e', '#09c2c8'],
-      type: 'liquidFill',
-      data: [value, value],
-      radius: '90%',
-      outline: {
-        show: false
-      },
-      backgroundStyle: {
-        color: 'transparent',
-        borderColor: '#0ac1c7',
-        borderWidth: 1,
-        shadowColor: 'rgba(0, 0, 0, 0.4)',
-        shadowBlur: 20
-      },
-      shape: 'path://"M61.3,2c6.2,0,12.1,1.1,17.5,3.4C84.3,7.7,89,10.8,93,14.6c4.1,4,7.3,8.6,9.7,13.8c2.4,5.2,3.5,10.9,3.5,16.9c0,8.1-2.4,16.9-7.1,26.4c-4.7,9.4-9.9,18.2-15.5,26.2c-5.6,8-13.1,17.4-22.4,28.1c-9.3-10.7-16.8-20-22.4-28.1c-5.6-8-10.8-16.8-15.5-26.2c-4.7-9.4-7.1-18.2-7.1-26.4c0-6,1.2-11.6,3.5-16.9c2.4-5.2,5.6-9.8,9.7-13.8c4-3.9,8.8-7,14.2-9.2C49.2,3.1,55,2,61.3,2L61.3,2z"',
-      label: {
-        normal: {
-          position: ['50%', '50%'],
-          formatter: function () {
-            return (value * 100) + '%';
-          },
-          textStyle: {
-            fontSize: 14,
-            color: '#D94854'
-          }
-        }
-      }
-    }]
-  };
-  myChart.setOption(option);
-};
-
-// Bar Chart (Shoe, Clothes, etc.)
-const initBarChart = (dom, val, con, max, color) => {
-  if (!dom) return;
-  const chart = echarts.init(dom);
-  charts.push(chart);
-  
-  const option = {
-    grid: {
-      left: '20%',
-      top: '0',
-      right: '20%',
-      bottom: '0'
-    },
-    xAxis: {
-      type: 'value',
-      splitLine: { show: false },
-      axisLine: { show: false },
-      axisLabel: { show: false },
-      axisTick: { show: false }
-    },
-    yAxis: [{
-      type: "category",
-      inverse: false,
-      data: [],
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: { show: false }
-    }],
-    series: [
-      {
-        type: 'pictorialBar',
-        data: [val],
-        itemStyle: {
-          normal: {
-            color: color
-          }
-        },
-        symbolRepeat: 'fixed',
-        symbolClip: true,
-        symbolSize: [12, 24],
-        symbol: 'roundRect',
-        label: {
-          show: true,
-          position: 'left',
-          formatter: function () {
-            return con;
-          },
-          color: '#fff',
-          fontSize: 16,
-        },
-        z: 1000
-      },
-      {
-        type: 'pictorialBar',
-        itemStyle: {
-          normal: {
-            color: '#193040'
-          }
-        },
-        data: [max],
-        animationDuration: 0,
-        symbolRepeat: 'fixed',
-        symbol: 'roundRect',
-        symbolSize: [12, 24],
-        label: {
-          show: true,
-          position: 'right',
-          formatter: function () {
-            return Math.floor(val * 100 / max) + '%';
-          },
-          color: '#fff',
-          fontSize: 16,
-        }
-      }
-    ]
-  };
-  chart.setOption(option);
-};
-
-// Bar Chart - 支出金额
-const initBarChartHourly = (dom, hourlyData = []) => {
-  if (!dom) return;
-  const chart = echarts.init(dom);
-  charts.push(chart);
-
-  // 如果没有数据，生成空数据
-  const xdata = hourlyData.length > 0 
-    ? hourlyData.map(item => item.hour) 
-    : Array.from({ length: 24 }, (_, i) => i);
-  
-  const dataArr = hourlyData.length > 0 
-    ? hourlyData.map(item => item.value) 
-    : Array(24).fill(0);
-
-  // 计算合适的 y 轴最大值
-  const maxValue = Math.max(...dataArr, 0);
-  const yAxisMax = maxValue > 0 ? Math.ceil(maxValue * 1.2) : 100;
-
-  const option = {
-    title: {
-      text: '今日支出金额趋势',
-      left: 'center',
-      top: 10,
-      textStyle: {
-        color: '#fff',
-        fontSize: 16
-      }
-    },
-    grid: {
-      left: "8%",
-      bottom: "8%",
-      top: "20%",
-      right: "5%",
-      containLabel: true
-    },
-    xAxis: {
-      type: "category",
-      data: xdata,
-      name: '小时',
-      nameTextStyle: {
-        color: '#fff'
-      },
-      axisLabel: {
-        show: true,
-        interval: 2,  // 每隔2个小时显示一个标签
-        formatter: '{value}时',
-        textStyle: {
-          color: "#fff",
-          fontSize: 11
-        }
-      },
-      axisLine: {
-        lineStyle: {
-          color: 'rgba(255,255,255,0.3)',
-          width: 1
-        }
-      }
-    },
-    tooltip: {
-      show: true,
-      trigger: 'axis',
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      borderColor: '#f29701',
-      textStyle: {
-        color: '#fff'
-      },
-      formatter: function(params) {
-        const item = params[0];
-        return `${item.axisValue}时<br/>支出金额: ¥${item.value.toLocaleString()}`;
-      }
-    },
-    yAxis: [{
-      type: 'value',
-      name: '金额(元)',
-      nameTextStyle: {
-        color: '#fff'
-      },
-      min: 0,
-      max: yAxisMax,
-      axisLabel: {
-        formatter: function(value) {
-          if (value >= 10000) {
-            return (value / 10000).toFixed(1) + '万';
-          }
-          return value;
-        },
-        textStyle: {
-          color: '#fff',
-          fontSize: 11
-        }
-      },
-      axisLine: {
-        lineStyle: {
-          color: 'rgba(255,255,255,0.3)',
-          width: 1
-        }
-      },
-      axisTick: { show: false },
-      splitLine: { 
-        show: true,
-        lineStyle: {
-          color: 'rgba(255,255,255,0.1)',
-          type: 'dashed'
-        }
-      }
-    }],
-    series: [{
-      type: 'bar',
-      name: '支出金额',
-      barWidth: '60%',
-      itemStyle: {
-        normal: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#f29701' },
-            { offset: 1, color: '#e08d03' }
-          ]),
-          borderRadius: [4, 4, 0, 0]
-        },
-        emphasis: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#ffa500' },
-            { offset: 1, color: '#f29701' }
-          ])
-        }
-      },
-      data: dataArr
-    }]
-  };
-
-  chart.setOption(option);
-};
-
-// Line Chart
-const initLineChart = (dom, hourlyData = []) => {
-  if (!dom) return;
-  const chart = echarts.init(dom);
-  charts.push(chart);
-
-  // 如果没有数据，生成空数据
-  const xdata = hourlyData.length > 0 
-    ? hourlyData.map(item => item.hour) 
-    : Array.from({ length: 24 }, (_, i) => i);
-  
-  const dataArr = hourlyData.length > 0 
-    ? hourlyData.map(item => item.value) 
-    : Array(24).fill(0);
-
-  // 计算合适的 y 轴最大值
-  const maxValue = Math.max(...dataArr, 0);
-  const yAxisMax = maxValue > 0 ? Math.ceil(maxValue * 1.2) : 100;
-
-  const option = {
-    title: {
-      text: '今日用户支付金额趋势',
-      left: 'center',
-      top: 10,
-      textStyle: {
-        color: '#fff',
-        fontSize: 16
-      }
-    },
-    grid: {
-      left: "8%",
-      bottom: "8%",
-      top: "20%",
-      right: "5%",
-      containLabel: true
-    },
-    xAxis: {
-      type: "category",
-      data: xdata,
-      name: '小时',
-      nameTextStyle: {
-        color: '#fff'
-      },
-      axisLabel: {
-        show: true,
-        interval: 2,  // 每隔2个小时显示一个标签
-        formatter: '{value}时',
-        textStyle: {
-          color: "#fff",
-          fontSize: 11
-        }
-      },
-      axisLine: {
-        lineStyle: {
-          color: 'rgba(255,255,255,0.3)',
-          width: 1
-        }
-      }
-    },
-    tooltip: {
-      show: true,
-      trigger: 'axis',
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      borderColor: '#00c2c2',
-      textStyle: {
-        color: '#fff'
-      },
-      formatter: function(params) {
-        const item = params[0];
-        return `${item.axisValue}时<br/>支付金额: ¥${item.value.toLocaleString()}`;
-      }
-    },
-    yAxis: [{
-      type: 'value',
-      name: '金额(元)',
-      nameTextStyle: {
-        color: '#fff'
-      },
-      min: 0,
-      max: yAxisMax,
-      axisLabel: {
-        formatter: function(value) {
-          if (value >= 10000) {
-            return (value / 10000).toFixed(1) + '万';
-          }
-          return value;
-        },
-        textStyle: {
-          color: '#fff',
-          fontSize: 11
-        }
-      },
-      axisLine: {
-        lineStyle: {
-          color: 'rgba(255,255,255,0.3)',
-          width: 1
-        }
-      },
-      axisTick: { show: false },
-      splitLine: { 
-        show: true,
-        lineStyle: {
-          color: 'rgba(255,255,255,0.1)',
-          type: 'dashed'
-        }
-      }
-    }],
-    series: [{
-      type: 'line',
-      name: '用户支付金额',
-      smooth: true,
-      symbol: "circle",
-      symbolSize: 6,
-      itemStyle: {
-        normal: {
-          color: '#34a39a',
-          lineStyle: {
-            color: "#34a39a",
-            width: 2
-          },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-              offset: 0,
-              color: "#08808b"
-            },
-            {
-              offset: 1,
-              color: 'rgba(0,0,0,0.2)',
-            }
-            ])
-          }
-        }
-      },
-      data: dataArr
-    }]
-  };
-
-  // 清除之前的定时器
-  if (lineChartIntervalId) {
-    clearInterval(lineChartIntervalId);
-  }
-
-  // 自动轮播 tooltip
-  let index = 0;
-  lineChartIntervalId = setInterval(() => {
-    chart.dispatchAction({
-      type: 'showTip',
-      seriesIndex: 0,
-      dataIndex: index
-    });
-    index++;
-    if (index >= xdata.length) {
-      index = 0;
-    }
-  }, 2000);
-
-  chart.setOption(option);
-};
-
-// Rain Background
-const initRainBg = () => {
-  const c = rainRef.value;
-  if (!c || !totalRef.value) return;
-  
-  const ctx = c.getContext("2d");
-  let w = c.width = totalRef.value.clientWidth;
-  let h = c.height = totalRef.value.clientHeight;
-
-  const random = (min, max) => Math.random() * (max - min) + min;
-
-  class RainDrop {
-    constructor() {
-      this.init();
-    }
-    init() {
-      this.x = random(0, w);
-      this.y = h;
-      this.color = 'hsl(180, 100%, 50%)';
-      this.vy = random(4, 5);
-      this.hit = 0;
-      this.size = 2;
-    }
-    draw() {
-      if (this.y > this.hit) {
-        const linearGradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.size * 30);
-        linearGradient.addColorStop(0, '#14789c');
-        linearGradient.addColorStop(1, '#090723');
-        ctx.fillStyle = linearGradient;
-        ctx.fillRect(this.x, this.y, this.size, this.size * 50);
-      }
-      this.update();
-    }
-    update() {
-      if (this.y > this.hit) {
-        this.y -= this.vy;
-      } else {
-        this.init();
-      }
-    }
-  }
-
-  const rs = [];
-  for (let i = 0; i < 10; i++) {
-    setTimeout(() => {
-      const r = new RainDrop();
-      rs.push(r);
-    }, i * 300);
-  }
-
-  const anim = () => {
-    ctx.clearRect(0, 0, w, h);
-    for (let i = 0; i < rs.length; i++) {
-      rs[i].draw();
-    }
-    rainAnimId = requestAnimationFrame(anim);
-  };
-
-  anim();
-};
-
-// Dashed Line
-const initDashed = () => {
-  const canvas = dashedRef.value;
-  if (!canvas || !totalRef.value) return;
-  
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width = totalRef.value.clientWidth;
-  const h = canvas.height = totalRef.value.clientHeight / 3 * 2;
-  
-  ctx.lineWidth = 3;
-  ctx.setLineDash([3, 3]);
-  ctx.fillStyle = '#93f8fb';
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
-  ctx.shadowColor = '#93f8fb';
-  ctx.shadowBlur = 15;
-
-  const drawCurve = (x1, y1, cp1x, cp1y, x2, y2, gradientStops) => {
-    ctx.save();
-    ctx.beginPath();
-    const grd = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradientStops.forEach(stop => grd.addColorStop(stop[0], stop[1]));
-    ctx.strokeStyle = grd;
-    ctx.moveTo(x2, y2);
-    ctx.quadraticCurveTo(cp1x, cp1y, x1, y1);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.arc(x1, y1, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  };
-
-  // 1
-  drawCurve(w / 11 * 2, h / 3, w / 5, h / 6 * 5, w / 5 * 2, h, [[0, "#54e2e6"], [1, "#065261"]]);
-  // 2
-  drawCurve(w / 11 * 3.3, h / 2, w / 5 * 1.5, h / 6 * 4.2, w / 3 * 1.1, h / 6 * 5, [[0, "#e08d03"], [1, "#2e6a5c"]]);
-  // 3
-  drawCurve(w / 3 * 1.4, h / 5, w / 3 * 1.2, h / 4 * 1.4, w / 5 * 2, h / 2, [[0, "#e08d03"], [1, "#2e6a5c"]]);
-  // 4
-  drawCurve(w / 5 * 3.1, h / 3 * 1.2, w / 5 * 3.35, h / 2 * 1.2, w / 5 * 3.2, h / 2 * 1.5, [[0, "#e08d03"], [1, "#2e6a5c"]]);
-  // 5
-  drawCurve(w / 5 * 3.3, h / 4, w / 5 * 3.8, h / 2 * 1.2, w / 5 * 3.03, h / 2 * 1.9, [[0, "#e08d03"], [1, "#2e6a5c"]]);
-  // 6
-  drawCurve(w / 5 * 3.8, h / 2 * 1.2, w / 5 * 3.7, h / 2 * 1.6, w / 5 * 2.9, h, [[0, "#e08d03"], [1, "#2e6a5c"]]);
-};
-
-const handleResize = () => {
-  charts.forEach(chart => chart.resize());
-  // Re-init canvas if needed
-  if (rainRef.value && totalRef.value) {
-    rainRef.value.width = totalRef.value.clientWidth;
-    rainRef.value.height = totalRef.value.clientHeight;
-  }
-  if (dashedRef.value && totalRef.value) {
-    dashedRef.value.width = totalRef.value.clientWidth;
-    dashedRef.value.height = totalRef.value.clientHeight / 3 * 2;
-    initDashed(); // Redraw dashed lines
-  }
-};
-
-// 初始化 ResizeObserver
-const initResizeObserver = () => {
-  resizeObserver = new ResizeObserver(() => {
-    if (resizeTimeout) clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      handleResize();
-    }, 100);
-  });
-  
-  const container = document.querySelector('.dvd-screen');
-  if (container) {
-    resizeObserver.observe(container);
-  }
-};
 
 // 加载店铺列表
 const loadStoreList = async () => {
   try {
-    const response = await getDdStoreList();
-    if (response.code === 200 && response.data) {
-      storeList.value = response.data.map(item => ({
-        id: item.storeId,
-        name: item.storeName
-      }));
+    const res = await getDdStoreList();
+    if (res && res.data && Array.isArray(res.data)) {
+      storeList.value = res.data;
     }
-  } catch (error) {
-    console.error('加载店铺列表失败:', error);
+  } catch (e) {
+    console.warn('加载店铺列表失败', e);
   }
 };
 
-// 加载店铺TOP5数据
-const loadStoreTop5 = async () => {
-  try {
-    const params = {
-      sort_by: sortBy.value,
-      limit: 5
-    };
-    
-    // 添加店铺筛选
-    if (selectedStore.value) {
-      params.store_id = selectedStore.value;
-    }
-    
-    const response = await getDdStoreTop5(params);
-    if (response.code === 200 && response.data) {
-      brandTop5.value = response.data;
-    }
-  } catch (error) {
-    console.error('加载店铺TOP5失败:', error);
-    // 失败时使用空数组
-    brandTop5.value = [];
-  }
+// 筛选条件变化时重新拉取地图数据 + 订单列表 + 概览指标 + 类目占比
+const handleFilterChange = () => {
+  // 下钻状态重置到全国，避免筛选后层级混乱
+  parentInfo.value = [{ cityName: '全国', code: 100000 }];
+  init(100000);
+  loadOrderList(true);
+  loadOverviewMetrics();
+  loadCategoryStats();
+  loadTrafficTrend();
 };
 
-// 加载概览指标数据
+// ==================== 当日情况概览指标 ====================
+const overviewMetrics = ref({});
+
+// 格式化大数字（千分位）
+const fmtNum = (val, decimals = 0) => {
+  const n = Number(val ?? 0);
+  return n.toLocaleString('zh-CN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+};
+
+// 获取概览指标数据；接口 start_date/end_date 必填，未选日期默认传今天
 const loadOverviewMetrics = async () => {
   try {
+    let startDate, endDate;
+    if (selectedDateRange.value && selectedDateRange.value.length === 2) {
+      startDate = selectedDateRange.value[0];
+      endDate = selectedDateRange.value[1];
+    } else {
+      const today = formatDate(new Date());
+      startDate = today;
+      endDate = today;
+    }
+    const params = { start_date: startDate, end_date: endDate };
+    if (selectedStore.value) params.store_id = selectedStore.value;
+
+    const res = await getDdDailyOverviewMetrics(params);
+    if (res && res.data) {
+      const d = res.data;
+      // 转化率：前端自算 = 成交订单数 / 点击人数 × 100，后端无此直接字段
+      const conversionRate = d.productClickUcnt > 0
+        ? ((d.payCnt / d.productClickUcnt) * 100).toFixed(2)
+        : '0.00';
+      overviewMetrics.value = { ...d, conversionRate };
+    }
+  } catch (e) {
+    console.warn('加载概览指标失败', e);
+  }
+};
+
+// ==================== 流量趋势柱线混合图 ====================
+let trafficChart = null;
+
+const initTrafficChart = (rows) => {
+  const dom = document.getElementById('trafficTrendChart');
+  if (!dom) return;
+  if (!trafficChart) {
+    trafficChart = echarts.init(dom);
+  }
+  trafficChart.resize();
+
+  const dates          = rows.map(r => r.date);
+  const showUcnt       = rows.map(r => r.productShowUcnt);
+  const showCnt        = rows.map(r => r.productShowCnt);
+  const clickUcnt      = rows.map(r => r.productClickUcnt);
+  const clickCnt       = rows.map(r => r.productClickCnt);
+
+  const option = {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(0,30,60,0.88)',
+      borderColor: '#00c6fb',
+      textStyle: { color: '#e0f4ff', fontSize: 12 },
+      axisPointer: { type: 'cross', crossStyle: { color: '#00c6fb' } },
+    },
+    legend: {
+      top: 6,
+      itemWidth: 12,
+      itemHeight: 8,
+      textStyle: { color: '#b3d4f5', fontSize: 11 },
+      data: ['曝光人数', '曝光次数', '点击人数', '点击次数'],
+    },
+    grid: { left: '2%', right: '4%', bottom: '8%', top: '52px', containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLine: { lineStyle: { color: '#1a5080' } },
+      axisLabel: {
+        color: '#7ec4ff',
+        fontSize: 10,
+        rotate: dates.length > 10 ? 30 : 0,
+        formatter: v => v.slice(5), // 只显示 MM-DD
+      },
+      axisTick: { show: false },
+    },
+    yAxis: [
+      {
+        // 左轴：人数（柱）
+        type: 'value',
+        name: '人数',
+        nameTextStyle: { color: '#7ec4ff', fontSize: 11 },
+        axisLabel: { color: '#7ec4ff', fontSize: 10 },
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: 'rgba(0,100,160,0.25)' } },
+      },
+      {
+        // 右轴：次数（线）
+        type: 'value',
+        name: '次数',
+        nameTextStyle: { color: '#54b0fe', fontSize: 11 },
+        axisLabel: { color: '#54b0fe', fontSize: 10 },
+        axisLine: { show: false },
+        splitLine: { show: false },
+      },
+    ],
+    series: [
+      {
+        name: '曝光人数',
+        type: 'bar',
+        yAxisIndex: 0,
+        barMaxWidth: 14,
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#24CFF4' },
+            { offset: 1, color: '#0059a6' },
+          ]),
+          borderRadius: [3, 3, 0, 0],
+        },
+        data: showUcnt,
+      },
+      {
+        name: '点击人数',
+        type: 'bar',
+        yAxisIndex: 0,
+        barMaxWidth: 14,
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#00c6fb' },
+            { offset: 1, color: '#003d7a' },
+          ]),
+          borderRadius: [3, 3, 0, 0],
+        },
+        data: clickUcnt,
+      },
+      {
+        name: '曝光次数',
+        type: 'line',
+        yAxisIndex: 1,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 5,
+        lineStyle: { color: '#7ec4ff', width: 2 },
+        itemStyle: { color: '#7ec4ff' },
+        areaStyle: { color: 'rgba(126,196,255,0.08)' },
+        data: showCnt,
+      },
+      {
+        name: '点击次数',
+        type: 'line',
+        yAxisIndex: 1,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 5,
+        lineStyle: { color: '#54b0fe', width: 2, type: 'dashed' },
+        itemStyle: { color: '#54b0fe' },
+        data: clickCnt,
+      },
+    ],
+  };
+  trafficChart.setOption(option, true);
+};
+
+const loadTrafficTrend = async () => {
+  try {
+    let startDate, endDate;
+    if (selectedDateRange.value && selectedDateRange.value.length === 2) {
+      startDate = selectedDateRange.value[0];
+      endDate   = selectedDateRange.value[1];
+    } else {
+      // 未选日期时默认展示最近 30 天
+      const today = new Date();
+      const past  = new Date(today);
+      past.setDate(today.getDate() - 29);
+      startDate = formatDate(past);
+      endDate   = formatDate(today);
+    }
+    const params = { start_date: startDate, end_date: endDate };
+    if (selectedStore.value) params.store_id = selectedStore.value;
+
+    const res = await getDdTrafficTrend(params);
+    if (res && res.data) {
+      initTrafficChart(res.data);
+    }
+  } catch (e) {
+    console.warn('加载流量趋势失败', e);
+  }
+};
+
+// ==================== 类目销售占比玫瑰图 ====================
+let roseChart1 = null;
+let roseChart2 = null;
+
+// 玫瑰图通用配色（深蓝科技风）
+const ROSE_COLORS = [
+  '#00c6fb', '#005bea', '#2a9bfd', '#7ec4ff',
+  '#54b0fe', '#0087fa', '#0059a6', '#003d7a',
+  '#24CFF4', '#1a8fd1'
+];
+
+// 初始化/更新商品名称玫瑰图
+const initRoseChart1 = (data) => {
+  const dom = document.getElementById('roseChart1');
+  if (!dom) return;
+  if (!roseChart1) {
+    roseChart1 = echarts.init(dom);
+  }
+  roseChart1.resize();
+  const option = {
+    backgroundColor: 'transparent',
+    color: ROSE_COLORS,
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}<br/>订单数：{c} ({d}%)',
+      backgroundColor: 'rgba(0,30,60,0.85)',
+      borderColor: '#00c6fb',
+      textStyle: { color: '#e0f4ff', fontSize: 12 }
+    },
+    legend: {
+      type: 'scroll',
+      orient: 'horizontal',
+      bottom: 0,
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { color: '#b3d4f5', fontSize: 10 },
+      pageTextStyle: { color: '#b3d4f5' },
+      pageIconColor: '#00c6fb',
+      pageIconInactiveColor: '#334a60',
+    },
+    series: [{
+      name: '商品名称',
+      type: 'pie',
+      radius: ['20%', '60%'],
+      center: ['50%', '42%'],
+      roseType: 'area',
+      itemStyle: {
+        borderRadius: 4,
+        borderColor: 'rgba(0,20,50,0.6)',
+        borderWidth: 1
+      },
+      label: {
+        show: true,
+        color: '#b3d4f5',
+        fontSize: 10,
+        formatter: '{d}%'
+      },
+      labelLine: { length: 6, length2: 8, lineStyle: { color: '#4a7fa5' } },
+      emphasis: {
+        itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,198,251,0.5)' }
+      },
+      data: data || []
+    }]
+  };
+  roseChart1.setOption(option, true);
+};
+
+// 初始化/更新商品规格玫瑰图
+const initRoseChart2 = (data) => {
+  const dom = document.getElementById('roseChart2');
+  if (!dom) return;
+  if (!roseChart2) {
+    roseChart2 = echarts.init(dom);
+  }
+  roseChart2.resize();
+  const option = {
+    backgroundColor: 'transparent',
+    color: ROSE_COLORS,
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}<br/>订单数：{c} ({d}%)',
+      backgroundColor: 'rgba(0,30,60,0.85)',
+      borderColor: '#00c6fb',
+      textStyle: { color: '#e0f4ff', fontSize: 12 }
+    },
+    legend: {
+      type: 'scroll',
+      orient: 'horizontal',
+      bottom: 0,
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { color: '#b3d4f5', fontSize: 10 },
+      pageTextStyle: { color: '#b3d4f5' },
+      pageIconColor: '#00c6fb',
+      pageIconInactiveColor: '#334a60',
+    },
+    series: [{
+      name: '商品规格',
+      type: 'pie',
+      radius: ['20%', '60%'],
+      center: ['50%', '42%'],
+      roseType: 'area',
+      itemStyle: {
+        borderRadius: 4,
+        borderColor: 'rgba(0,20,50,0.6)',
+        borderWidth: 1
+      },
+      label: {
+        show: true,
+        color: '#b3d4f5',
+        fontSize: 10,
+        formatter: '{d}%'
+      },
+      labelLine: { length: 6, length2: 8, lineStyle: { color: '#4a7fa5' } },
+      emphasis: {
+        itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,198,251,0.5)' }
+      },
+      data: data || []
+    }]
+  };
+  roseChart2.setOption(option, true);
+};
+
+// 获取类目占比数据并渲染玫瑰图
+const loadCategoryStats = async () => {
+  try {
     const params = {};
-    
-    // 添加店铺筛选
-    if (selectedStore.value) {
-      params.store_id = selectedStore.value;
+    if (selectedDateRange.value && selectedDateRange.value.length === 2) {
+      params.start_date = selectedDateRange.value[0];
+      params.end_date = selectedDateRange.value[1];
     }
-    
-    const response = await getDdOverviewMetrics(params);
-    if (response.code === 200 && response.data) {
-      const data = response.data;
-      
-      // 填充销售指标数据
-      salesMetrics.value = {
-        payAmt: data.payAmt || 0,  // 用户支付金额
-        payCnt: data.payCnt || 0,  // 成交订单数
-        productShowUcnt: data.productShowUcnt || 0,  // 商品曝光人数
-        refundAmtPayTime: data.refundAmtPayTime || 0,  // 退款金额(支付时间)
-        incomeAmt: data.incomeAmt || 0,  // 成交金额
-        metrics: {
-          adCost: data.adCost || 0,  // 投放消耗
-          perUsrPayAmt: data.perUsrPayAmt || 0,  // 客单价
-          conversionRate: data.conversionRate || 0  // 转化率
+    if (selectedStore.value) params.store_id = selectedStore.value;
+
+    const res = await getDdCategoryStats(params);
+    if (res && res.data) {
+      initRoseChart1(res.data.productStats || []);
+      initRoseChart2(res.data.skuStats || []);
+    }
+  } catch (e) {
+    console.warn('加载类目占比失败', e);
+  }
+};
+
+// ==================== 订单信息滚动列表 ====================
+const orderList = ref([]);
+const orderPageNum = ref(1);
+const orderLoading = ref(false);
+const orderNoMore = ref(false);
+const ORDER_PAGE_SIZE = 20;
+
+// 格式化日期为 YYYY-MM-DD
+const formatDate = (d) => {
+  const dt = d instanceof Date ? d : new Date(d);
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const day = String(dt.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+// 加载订单列表；reset=true 时清空列表从第1页开始
+const loadOrderList = async (reset = false) => {
+  if (orderLoading.value) return;
+  if (!reset && orderNoMore.value) return;
+
+  if (reset) {
+    orderList.value = [];
+    orderPageNum.value = 1;
+    orderNoMore.value = false;
+  }
+
+  orderLoading.value = true;
+  try {
+    const params = {
+      page_num: orderPageNum.value,
+      page_size: ORDER_PAGE_SIZE,
+    };
+    // 仅在用户手动选择日期后才传日期参数
+    if (selectedDateRange.value && selectedDateRange.value.length === 2) {
+      params.start_date = selectedDateRange.value[0];
+      params.end_date = selectedDateRange.value[1];
+    }
+    if (selectedStore.value) params.store_id = selectedStore.value;
+
+    const res = await getDdDailyOrderList(params);
+    if (res && res.code === 200) {
+      // model_content 响应：rows/total 直接在顶层
+      const rows = res.rows || [];
+      const total = res.total || 0;
+      orderList.value = reset ? rows : [...orderList.value, ...rows];
+      if (orderList.value.length >= total || rows.length < ORDER_PAGE_SIZE) {
+        orderNoMore.value = true;
+      } else {
+        orderPageNum.value += 1;
+      }
+    }
+  } catch (e) {
+    console.warn('加载订单列表失败', e);
+  } finally {
+    orderLoading.value = false;
+  }
+};
+
+// 滚动到底部时加载下一页
+const handleOrderScroll = (e) => {
+  const el = e.target;
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 30) {
+    loadOrderList(false);
+  }
+};
+
+// 根据订单状态返回对应 CSS class
+const getOrderStatusClass = (status) => {
+  if (!status) return '';
+  if (status.includes('完成') || status.includes('成功')) return 'status-done';
+  if (status.includes('退款') || status.includes('退货') || status.includes('取消')) return 'status-refund';
+  return 'status-pending';
+};
+
+// 点击订单卡片跳转到订单详情页
+const openOrderDetail = (url) => {
+  if (url) window.open(url, '_blank');
+};
+
+// 格式化订单时间，只显示 MM-DD HH:mm
+const formatOrderTime = (val) => {
+  if (!val) return '—';
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return String(val).substring(5, 16);
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${m}-${day} ${h}:${min}`;
+};
+
+const time = () => {
+  clearTimeout(timer);
+  const dt = new Date();
+  const y = dt.getFullYear();
+  const mt = dt.getMonth() + 1;
+  const day = dt.getDate();
+  const h = dt.getHours();
+  const m = dt.getMinutes();
+  const s = dt.getSeconds();
+  const showTime = document.getElementById("showTime");
+  if (showTime) {
+    showTime.innerHTML = y + "/" + mt + "/" + day + " " + h + ":" + m + ":" + s + "";
+  }
+  timer = setTimeout(time, 1000);
+}
+
+const echarts_1 = () => {
+  const dom = document.getElementById('echart1');
+  if (!dom) return;
+  const myChart = echarts.init(dom);
+  charts.push(myChart);
+  const option = {
+    title: {
+      text: '14%',
+      x: 'center',
+      y: 'center',
+      textStyle: {
+        fontWeight: 'normal',
+        color: '#0580f2',
+        fontSize: '24'
+      }
+    },
+    color: ['rgba(176, 212, 251, .1)'],
+    series: [{
+      name: 'Line 1',
+      type: 'pie',
+      clockWise: true,
+      radius: ['75%', '85%'],
+      itemStyle: {
+        normal: {
+          label: { show: false },
+          labelLine: { show: false },
         }
-      };
-      
-      // 填充会销指标数据（水球图）
-      meetingMetrics.value = {
-        target: 0,
-        actual: 0,
-        ratio: 0,
-        productClickPayCntRatio: data.productClickPayCntRatio ? data.productClickPayCntRatio / 100 : 0,  // 商品点击-成交转化率
-        productShowClickCntRatio: data.productShowClickCntRatio ? data.productShowClickCntRatio / 100 : 0  // 商品曝光-点击转化率
-      };
-      
-      // 填充分类指标（退款率、投放费比）
-      categoryMetrics.value = {
-        refundAmtRate: { count: data.refundAmtRate || 0, max: 100 },  // 退款率
-        adExpenseRatioWithRefund: { count: data.adExpenseRatioWithRefund || 0, max: 100 },  // 投放费比
-        accessories: { count: 0, max: 100 }
-      };
-      
-      // 更新图表
-      nextTick(() => {
-        updateAllCharts();
+      },
+      hoverAnimation: false,
+      data: [{
+        value: 14,
+        name: '01',
+        itemStyle: {
+          normal: {
+            color: {
+              colorStops: [{
+                offset: 0,
+                color: '#005bea'
+              }, {
+                offset: 1,
+                color: '#00c6fb'
+              }]
+            },
+            label: { show: false },
+            labelLine: { show: false }
+          }
+        }
+      }, {
+        name: '86',
+        value: 20
+      }]
+    }]
+  };
+  myChart.setOption(option);
+}
+
+const echarts_2 = () => {
+  const dom = document.getElementById('echart2');
+  if (!dom) return;
+  const myChart = echarts.init(dom);
+  charts.push(myChart);
+  const option = {
+    title: {
+      text: '22%',
+      x: 'center',
+      y: 'center',
+      textStyle: {
+        fontWeight: 'normal',
+        color: '#0580f2',
+        fontSize: '24'
+      }
+    },
+    color: ['rgba(176, 212, 251, .1)'],
+    series: [{
+      name: 'Line 1',
+      type: 'pie',
+      clockWise: true,
+      radius: ['75%', '85%'],
+      itemStyle: {
+        normal: {
+          label: { show: false },
+          labelLine: { show: false },
+        }
+      },
+      hoverAnimation: false,
+      data: [{
+        value: 22,
+        name: '01',
+        itemStyle: {
+          normal: {
+            color: {
+              colorStops: [{
+                offset: 0,
+                color: '#005bea'
+              }, {
+                offset: 1,
+                color: '#00c6fb'
+              }]
+            },
+            label: { show: false },
+            labelLine: { show: false }
+          }
+        }
+      }, {
+        name: '78',
+        value: 20
+      }]
+    }]
+  };
+  myChart.setOption(option);
+}
+
+const echarts_3 = () => {
+  const dom = document.getElementById('echart3');
+  if (!dom) return;
+  const myChart = echarts.init(dom);
+  charts.push(myChart);
+  const option = {
+    title: {
+      text: '10%',
+      x: 'center',
+      y: 'center',
+      textStyle: {
+        fontWeight: 'normal',
+        color: '#0580f2',
+        fontSize: '24'
+      }
+    },
+    color: ['rgba(176, 212, 251, .1)'],
+    series: [{
+      name: 'Line 1',
+      type: 'pie',
+      clockWise: true,
+      radius: ['75%', '85%'],
+      itemStyle: {
+        normal: {
+          label: { show: false },
+          labelLine: { show: false },
+        }
+      },
+      hoverAnimation: false,
+      data: [{
+        value: 10,
+        name: '01',
+        itemStyle: {
+          normal: {
+            color: {
+              colorStops: [{
+                offset: 0,
+                color: '#005bea'
+              }, {
+                offset: 1,
+                color: '#00c6fb'
+              }]
+            },
+            label: { show: false },
+            labelLine: { show: false }
+          }
+        }
+      }, {
+        name: '02',
+        value: 90
+      }]
+    }]
+  };
+  myChart.setOption(option);
+}
+
+const echarts_4 = () => {
+  const dom = document.getElementById('echart4');
+  if (!dom) return;
+  const myChart = echarts.init(dom);
+  charts.push(myChart);
+  const option = {
+    title: {
+      text: '30%',
+      x: 'center',
+      y: 'center',
+      textStyle: {
+        fontWeight: 'normal',
+        color: '#0580f2',
+        fontSize: '24'
+      }
+    },
+    color: ['rgba(176, 212, 251, .1)'],
+    series: [{
+      name: 'Line 1',
+      type: 'pie',
+      clockWise: true,
+      radius: ['75%', '85%'],
+      itemStyle: {
+        normal: {
+          label: { show: false },
+          labelLine: { show: false },
+        }
+      },
+      hoverAnimation: false,
+      data: [{
+        value: 30,
+        name: '01',
+        itemStyle: {
+          normal: {
+            color: {
+              colorStops: [{
+                offset: 0,
+                color: '#005bea'
+              }, {
+                offset: 1,
+                color: '#00c6fb'
+              }]
+            },
+            label: { show: false },
+            labelLine: { show: false }
+          }
+        }
+      }, {
+        name: '02',
+        value: 70
+      }]
+    }]
+  };
+  myChart.setOption(option);
+}
+
+const echarts_5 = () => {
+  const dom = document.getElementById('echart5');
+  if (!dom) return;
+  const myChart = echarts.init(dom);
+  charts.push(myChart);
+  const option = {
+    title: {
+      text: '12%',
+      x: 'center',
+      y: 'center',
+      textStyle: {
+        fontWeight: 'normal',
+        color: '#0580f2',
+        fontSize: '24'
+      }
+    },
+    color: ['rgba(176, 212, 251, .1)'],
+    series: [{
+      name: 'Line 1',
+      type: 'pie',
+      clockWise: true,
+      radius: ['75%', '85%'],
+      itemStyle: {
+        normal: {
+          label: { show: false },
+          labelLine: { show: false },
+        }
+      },
+      hoverAnimation: false,
+      data: [{
+        value: 12,
+        name: '01',
+        itemStyle: {
+          normal: {
+            color: {
+              colorStops: [{
+                offset: 0,
+                color: '#005bea'
+              }, {
+                offset: 1,
+                color: '#00c6fb'
+              }]
+            },
+            label: { show: false },
+            labelLine: { show: false }
+          }
+        }
+      }, {
+        name: '02',
+        value: 88
+      }]
+    }]
+  };
+  myChart.setOption(option);
+}
+
+const echarts_6 = () => {
+  const dom = document.getElementById('echart6');
+  if (!dom) return;
+  const myChart = echarts.init(dom);
+  charts.push(myChart);
+  const option = {
+    title: {
+      text: '80%',
+      x: 'center',
+      y: 'center',
+      textStyle: {
+        fontWeight: 'normal',
+        color: '#0580f2',
+        fontSize: '24'
+      }
+    },
+    color: ['rgba(176, 212, 251, .1)'],
+    series: [{
+      name: 'Line 1',
+      type: 'pie',
+      clockWise: true,
+      radius: ['75%', '85%'],
+      itemStyle: {
+        normal: {
+          label: { show: false },
+          labelLine: { show: false },
+        }
+      },
+      hoverAnimation: false,
+      data: [{
+        value: 80,
+        name: '01',
+        itemStyle: {
+          normal: {
+            color: {
+              colorStops: [{
+                offset: 0,
+                color: '#005bea'
+              }, {
+                offset: 1,
+                color: '#00c6fb'
+              }]
+            },
+            label: { show: false },
+            labelLine: { show: false }
+          }
+        }
+      }, {
+        name: '02',
+        value: 20
+      }]
+    }]
+  };
+  myChart.setOption(option);
+}
+
+const echarts_7 = () => {
+  const dom = document.getElementById('echart7');
+  if (!dom) return;
+  const myChart = echarts.init(dom);
+  charts.push(myChart);
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    grid: {
+      left: '0%',
+      top: '15px',
+      right: '0%',
+      bottom: '0%',
+      containLabel: true
+    },
+    xAxis: {
+      data: ['8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
+      axisLine: { show: false },
+      axisLabel: {
+        color: '#fff',
+        fontSize: 12
+      }
+    },
+    yAxis: {
+      name: "（人）",
+      nameTextStyle: {
+        color: '#fff',
+        fontSize: 14
+      },
+      axisLine: { show: false },
+      axisLabel: {
+        color: '#fff',
+        fontSize: 12
+      },
+      splitLine: { show: false },
+      interval: 100,
+      max: 500
+    },
+    series: [{
+      type: 'bar',
+      barWidth: '30%',
+      itemStyle: {
+        normal: {
+          barBorderRadius: 50,
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+            offset: 0,
+            color: '#00c6fb'
+          }, {
+            offset: 0.8,
+            color: '#005bea'
+          }], false)
+        }
+      },
+      data: [25, 325, 164, 245, 475, 201, 121]
+    }]
+  };
+  myChart.setOption(option);
+}
+
+const echarts_8 = () => {
+  const dom = document.getElementById('echart8');
+  if (!dom) return;
+  const myChart = echarts.init(dom);
+  charts.push(myChart);
+  const option = {
+    color: ['#002c53', '#00427c', '#0059a6', '#0070d0', '#0087fa', '#2a9bfd', '#54b0fe', '#7ec4ff'],
+    tooltip: {
+      trigger: 'item',
+      formatter: "{a} <br/>{b}: {c} ({d}%)"
+    },
+    legend: {
+      orient: 'vertical',
+      right: 0,
+      y: 'center',
+      itemWidth: 12,
+      itemHeight: 12,
+      align: 'left',
+      textStyle: {
+        fontSize: 12,
+        color: '#fff'
+      },
+      data: ['test1', 'test2', 'test3', 'test4', 'test5'],
+    },
+    series: [
+      {
+        name: '访问来源',
+        type: 'pie',
+        center: ['50%', '50%'],
+        radius: ['20%', '50%'],
+        label: {
+          normal: {
+            formatter: '{c|{d}%}',
+            rich: {
+              c: {
+                fontSize: 12,
+                color: '#fff',
+              }
+            }
+          }
+        },
+        labelLine: {
+          normal: {
+            show: true,
+            length: 2,
+            length2: 5,
+            lineStyle: {
+              width: 1
+            }
+          }
+        },
+        roseType: 'area',
+        data: [{
+          value: 10,
+          name: 'test1'
+        },
+        {
+          value: 20,
+          name: 'test2'
+        },
+        {
+          value: 5,
+          name: 'test3'
+        },
+        {
+          value: 15,
+          name: 'test4'
+        },
+        {
+          value: 15,
+          name: 'test5'
+        }
+        ]
+      }
+    ]
+  };
+  myChart.setOption(option);
+}
+
+// ==================== 新地图函数组 ====================
+
+// 获取 GeoJSON：统一从 DataV API 获取（保证 ECharts5 GeoJSON 格式一致），失败则回退本地 china.json
+// 注意：本地 china.json 的 coordinates 均为空数组，无法渲染省份边界，因此全国地图也必须走 API
+const getGeoJson = (adcode) => {
+  return new Promise((resolve) => {
+    fetch(`https://geo.datav.aliyun.com/areas_v3/bound/${adcode}_full.json`)
+      .then(res => res.json())
+      .then(data => resolve(data))
+      .catch(() => {
+        console.warn('DataV 获取失败，回退本地 china.json');
+        resolve(mapJson);
       });
-    }
-  } catch (error) {
-    console.error('加载概览指标失败:', error);
-  }
-};
-
-// 加载小时趋势数据（支付金额）
-const loadHourlyTrend = async () => {
-  try {
-    const params = {
-      index_display: '今日用户支付金额'  // 指定查询的指标
-    };
-    
-    // 添加店铺筛选
-    if (selectedStore.value) {
-      params.store_id = selectedStore.value;
-    }
-    
-    const response = await getDdHourlyTrend(params);
-    console.log('小时趋势数据（支付金额）:', response.data);  // 调试日志
-    if (response.code === 200 && response.data) {
-      // 更新折线图
-      nextTick(() => {
-        initLineChart(lineChartRef.value, response.data);
-      });
-    }
-  } catch (error) {
-    console.error('加载小时趋势失败:', error);
-    // 失败时使用空数据
-    nextTick(() => {
-      initLineChart(lineChartRef.value, []);
-    });
-  }
-};
-
-// 加载小时支出金额数据（柱状图）
-const loadHourlyExpense = async () => {
-  try {
-    const params = {
-      index_display: '今日支出金额'  // 指定查询支出金额指标
-    };
-    
-    // 添加店铺筛选
-    if (selectedStore.value) {
-      params.store_id = selectedStore.value;
-    }
-    
-    const response = await getDdHourlyTrend(params);
-    console.log('小时趋势数据（支出金额）:', response.data);  // 调试日志
-    if (response.code === 200 && response.data) {
-      // 更新柱状图
-      nextTick(() => {
-        initBarChartHourly(barChartRef.value, response.data);
-      });
-    }
-  } catch (error) {
-    console.error('加载小时支出金额失败:', error);
-    // 失败时使用空数据
-    nextTick(() => {
-      initBarChartHourly(barChartRef.value, []);
-    });
-  }
-};
-
-// 店铺变化处理
-const handleStoreChange = () => {
-  console.log('店铺变化:', selectedStore.value);
-  loadStoreTop5();
-  loadOverviewMetrics();
-  loadHourlyTrend();
-  loadHourlyExpense();
-};
-
-// 更新所有图表
-const updateAllCharts = () => {
-  initWaterChart(chart1Ref.value, meetingMetrics.value.productClickPayCntRatio);
-  initWaterChart(chart2Ref.value, meetingMetrics.value.productShowClickCntRatio);
-  initBarChart(shoeChartRef.value, categoryMetrics.value.refundAmtRate.count, '', categoryMetrics.value.refundAmtRate.max, '#09c4ca');
-  initBarChart(clothesChartRef.value, categoryMetrics.value.adExpenseRatioWithRefund.count, '', categoryMetrics.value.adExpenseRatioWithRefund.max, '#09c4ca');
-  initBarChart(mzChartRef.value, categoryMetrics.value.accessories.count, '', categoryMetrics.value.accessories.max, '#09c4ca');
-};
-
-onMounted(async () => {
-  window.addEventListener('resize', handleResize);
-  initResizeObserver();
-  
-  // 加载店铺列表和数据
-  await loadStoreList();
-  await loadStoreTop5();
-  await loadOverviewMetrics();
-  await loadHourlyTrend();
-  await loadHourlyExpense();
-  
-  nextTick(() => {
-    topColor();
-    initRainBg();
-    initDashed();
   });
+};
+
+
+
+
+// 根据缓存的统计数据 + 当前模式，构建 mapData/pointData 并渲染
+const renderMap = () => {
+  if (!geoJson || !geoJson.features || geoJson.features.length === 0) return;
+
+  const isAmount = mapMode.value === 'amount';
+  let mapData = [], pointData = [];
+
+  geoJson.features.forEach(item => {
+    // 跳过 name 或 center 缺失的异常条目（如全国GeoJSON中的南海诸岛特殊要素）
+    if (!item.properties || !item.properties.name || !item.properties.center) return;
+    const cityName = item.properties.name;
+    const stat = geoStatsMap[cityName] || { payAmount: 0, orderCount: 0 };
+    // 根据模式取对应展示值
+    const value = isAmount ? stat.payAmount : stat.orderCount;
+
+    mapData.push({
+      name: cityName,
+      value: value,
+      payAmount: stat.payAmount,
+      orderCount: stat.orderCount,
+      cityCode: item.properties.adcode,
+    });
+
+    // 只有有实际数据（value > 0）的地区才显示散点
+    if (value > 0) {
+      pointData.push({
+        name: cityName,
+        value: [item.properties.center[0], item.properties.center[1], value],
+        payAmount: stat.payAmount,
+        orderCount: stat.orderCount,
+        cityCode: item.properties.adcode,
+      });
+    }
+  });
+
+  mapData = mapData.sort((a, b) => b.value - a.value);
+  initEchartMap(mapData, pointData);
+};
+
+// 根据当前下钻层级从接口获取真实数据，缓存后调用 renderMap
+const getMapData = async () => {
+  // 【修复1】严格校验 GeoJSON 数据完整性
+  if (!geoJson || !geoJson.features || geoJson.features.length === 0) {
+    console.error('GeoJSON 数据未加载或格式错误');
+    return;
+  }
+
+  // 根据下钻深度确定聚合层级和父级筛选参数
+  const depth = parentInfo.value.length;
+  let level = 'province';
+  let parentProvince = null;
+  let parentCity = null;
+
+  if (depth === 2) {
+    // 下钻到省级 → 按城市聚合
+    level = 'city';
+    parentProvince = parentInfo.value[1].cityName;
+  } else if (depth >= 3) {
+    // 下钻到市级 → 按区县聚合
+    level = 'town';
+    parentProvince = parentInfo.value[1].cityName;
+    parentCity = parentInfo.value[2].cityName;
+  }
+
+  // 调用后端接口获取真实聚合数据，更新缓存
+  geoStatsMap = {};
+  try {
+    const params = { level };
+    if (parentProvince) params.parent_province = parentProvince;
+    if (parentCity) params.parent_city = parentCity;
+    if (selectedStore.value) params.store_id = selectedStore.value;
+    if (selectedDateRange.value && selectedDateRange.value.length === 2) {
+      params.start_date = selectedDateRange.value[0];
+      params.end_date = selectedDateRange.value[1];
+    }
+    const res = await getDdGeoOrderStats(params);
+    if (res && res.data && Array.isArray(res.data)) {
+      res.data.forEach(item => {
+        geoStatsMap[item.name] = item;
+      });
+    }
+  } catch (e) {
+    console.warn('获取地图统计数据失败，将使用零值填充', e);
+  }
+
+  renderMap();
+};
+
+// 渲染 echarts 地图（geo + effectScatter）
+const initEchartMap = (mapData, pointData) => {
+  
+  const dom = document.getElementById('map');
+  if (!dom) {
+    console.error('地图容器不存在');
+    return;
+  }
+
+  // 初始化或复用地图实例
+  if (!mapChart) {
+    mapChart = echarts.init(dom);
+  }
+
+  // 有效数据的最小/最大值（排除 value=0 的区域对 visualMap 范围的干扰）
+  const validData = mapData.filter(d => d.value > 0);
+  const min = validData.length === 0 ? 0 : validData[validData.length - 1].value;
+  const max = validData.length === 0 ? 0 : validData[0].value;
+
+  const isAmount = mapMode.value === 'amount';
+  const seriesLabel = isAmount ? '销售额' : '订单数';
+  const unit = isAmount ? '元' : '条';
+
+  // 全国时注册为 'china'，下钻时注册为 'map'
+  const mapName = parentInfo.value.length === 1 ? 'china' : 'map';
+  // 每次都重新注册（ECharts 5 支持重复注册，直接覆盖，不会抛出异常）
+  echarts.registerMap(mapName, geoJson);
+
+  const option = {
+    backgroundColor: 'transparent',
+    title: [
+      
+    ],
+    tooltip: {
+      trigger: 'item'
+    },
+    geo: {
+      map: mapName,
+      zoom: parentInfo.value.length === 1 ? 1.5 : (parentInfo.value[1].cityName === '海南省' ? 4.0 : 0.9),
+      roam: true,
+      top: parentInfo.value.length === 1 ? '25%' : (parentInfo.value[1].cityName === '海南省' ? '150%' : '3%'),
+      left: parentInfo.value.length === 1 ? '21%' : (parentInfo.value[1].cityName === '海南省' ? '70%' : '23%'),
+      label: {
+        show: true,
+        color: 'rgb(249, 249, 249)',
+        formatter: p => {
+          const nameMap = {
+            '内蒙古自治区': '内蒙古',
+            '西藏自治区': '西藏',
+            '新疆维吾尔自治区': '新疆',
+            '宁夏回族自治区': '宁夏',
+            '广西壮族自治区': '广西',
+            '香港特别行政区': '香港',
+            '澳门特别行政区': '澳门'
+          };
+          return nameMap[p.name] || p.name;
+        }
+      },
+      emphasis: {
+        label: { show: true, color: '#f75a00' },
+        itemStyle: { areaColor: '#8dd7fc', borderWidth: 1.6, shadowBlur: 25 }
+      },
+      // 【修复3】移除 geo 组件的固定 areaColor，避免覆盖 map 系列的着色
+      itemStyle: {
+        areaColor: 'rgba(13, 36, 81, 0.8)',
+        borderColor: '#1E90FF',
+        borderWidth: 2,
+        shadowBlur: 15,
+        shadowColor: 'rgb(58,115,192)',
+        shadowOffsetX: 7,
+        shadowOffsetY: 6
+      }
+    },
+    visualMap: {
+      min: min,
+      max: max,
+      left: '3%',
+      bottom: '5%',
+      calculable: true,
+      // 仅关联 map 系列（索引0），散点不需要着色关联
+      seriesIndex: [0],
+      inRange: { color: ['#0A2E5D', '#2E98CA', '#24CFF4'] },
+      textStyle: { color: '#24CFF4' },
+      // 数值标签附加单位
+      formatter: v => `${isAmount ? Number(v).toFixed(2) : Math.round(v)}${unit}`,
+      show: true
+    },
+    series: [
+      {
+        name: seriesLabel,
+        type: 'map',
+        geoIndex: 0,
+        map: mapName,
+        roam: true,
+        visualMap: true,
+        data: mapData,
+        itemStyle: {
+          areaColor: 'rgba(20, 41, 87, 0.8)',
+          borderColor: '#53D9FF',
+          borderWidth: 1
+        },
+        emphasis: {
+          itemStyle: { areaColor: '#F4E925' }
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: p => {
+            if (p.name === '南海诸岛') return;
+            const d = p.data || {};
+            const pay = d.payAmount != null ? d.payAmount : (isAmount ? (p.value || 0) : 0);
+            const cnt = d.orderCount != null ? d.orderCount : (!isAmount ? (p.value || 0) : 0);
+            return `<div style='text-align:left'>${p.name}:<br/>销售额：${Number(pay).toFixed(2)}元<br/>订单数：${cnt}条</div>`;
+          }
+        },
+        label: { show: false }
+      },
+      {
+        name: seriesLabel,
+        type: 'effectScatter',
+        coordinateSystem: 'geo',
+        rippleEffect: { brushType: 'fill' },
+        itemStyle: {
+          color: '#F4E925', shadowBlur: 10, shadowColor: '#333'
+        },
+        data: pointData,
+        symbolSize: val => val[2] === max ? 17 : 7,
+        showEffectOn: 'render',
+        tooltip: {
+          trigger: 'item',
+          formatter: p => {
+            if (!p.data) return;
+            const d = p.data;
+            const pay = d.payAmount != null ? d.payAmount : 0;
+            const cnt = d.orderCount != null ? d.orderCount : 0;
+            return `<div style='text-align:left'>${p.name}:<br/>销售额：${Number(pay).toFixed(2)}元<br/>订单数：${cnt}条</div>`;
+          }
+        }
+      }
+    ]
+  };
+
+  // 【修复8】先清空原有配置，再重新设置，避免初始化缓存问题
+  mapChart.clear();
+  mapChart.setOption(option, true);
+
+  // 【修复9】强制触发渲染，解决初始化时渲染延迟问题
+  mapChart.resize();
+
+  // 点击下钻事件（先解绑防止重复）
+  mapChart.off('click');
+  mapChart.on('click', params => {
+    let cityCode, cityName;
+
+    if (params.data && params.data.cityCode) {
+      // map 系列点击：params.data 包含完整数据
+      cityCode = params.data.cityCode;
+      cityName = params.data.name;
+    } else if (params.name) {
+      // geo 组件点击：通过 params.name 从当前 geoJson 中查找 adcode
+      const feature = geoJson.features.find(f => f.properties && f.properties.name === params.name);
+      if (!feature) return;
+      cityCode = feature.properties.adcode;
+      cityName = params.name;
+    } else {
+      return;
+    }
+
+    if (!cityCode) return;
+    if (parentInfo.value[parentInfo.value.length - 1].code == cityCode) return;
+    parentInfo.value.push({ cityName, code: cityCode });
+    console.log("parentInfo",parentInfo);
+    init(cityCode);
+  });
+};
+
+// 【修复10】确保 GeoJSON 加载完成后再初始化地图
+// 替换为你实际的 GeoJSON 加载逻辑
+const loadGeoJson = () => {
+  // 本地测试：假设 geoJson 已存在，直接执行
+  getMapData();
+};
+
+// 页面加载完成后初始化
+window.addEventListener('DOMContentLoaded', () => {
+  loadGeoJson();
+});
+
+
+// // 根据 geoJs
+
+// 返回上一级
+const goBack = () => {
+  if (parentInfo.value.length <= 1) return;
+  parentInfo.value.pop();
+  init(parentInfo.value[parentInfo.value.length - 1].code);
+};
+
+// 初始化：加载 GeoJSON 后渲染地图
+const init = async (adcode) => {
+  const data = await getGeoJson(adcode);
+  geoJson = data;
+  await getMapData();
+};
+
+const resizeCharts = () => {
+  charts.forEach(chart => {
+    chart.resize();
+  });
+  if (mapChart) mapChart.resize();
+  if (roseChart1) roseChart1.resize();
+  if (roseChart2) roseChart2.resize();
+  if (trafficChart) trafficChart.resize();
+};
+
+onMounted(() => {
+  time();
+  echarts_1();
+  echarts_2();
+  echarts_3();
+  echarts_4();
+  echarts_5();
+  echarts_6();
+  echarts_7();
+  echarts_8();
+  loadStoreList();
+  init(100000);
+  loadOrderList(true);
+  loadOverviewMetrics();
+  loadCategoryStats();
+  loadTrafficTrend();
+  window.addEventListener("resize", resizeCharts);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize);
-  
-  if (resizeTimeout) clearTimeout(resizeTimeout);
-  if (resizeObserver) {
-    resizeObserver.disconnect();
-    resizeObserver = null;
-  }
-  
-  if (intervalId) clearInterval(intervalId);
-  if (lineChartIntervalId) clearInterval(lineChartIntervalId);
-  if (rainAnimId) cancelAnimationFrame(rainAnimId);
-  
+  if (timer) clearTimeout(timer);
+  window.removeEventListener("resize", resizeCharts);
   charts.forEach(chart => chart.dispose());
+  charts = [];
+  if (mapChart) {
+    mapChart.dispose();
+    mapChart = null;
+  }
+  if (roseChart1) {
+    roseChart1.dispose();
+    roseChart1 = null;
+  }
+  if (roseChart2) {
+    roseChart2.dispose();
+    roseChart2 = null;
+  }
+  if (trafficChart) {
+    trafficChart.dispose();
+    trafficChart = null;
+  }
+  parentInfo.value = [{ cityName: '全国', code: 100000 }];
 });
 </script>
 
 <style scoped>
-/* Scoped styles based on original CSS */
-.dvd-screen {
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
+@font-face {
+  font-family: electronicFont;
+  src: url(./font/DS-DIGIT.TTF)
+}
+
+.dvd-wrapper {
+  color: #fff;
+  font-size: 16px;
   background: url(./images/53bg.png) no-repeat;
   background-size: 100% 100%;
-  font-family: 'Microsoft YaHei', sans-serif;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: "微软雅黑";
+  box-sizing: border-box;
+  padding: 0 10px 10px 10px;
+}
+
+.dvd-wrapper * {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box
+}
+
+/* Reset styles scoped to wrapper */
+.dvd-wrapper ul,
+.dvd-wrapper li,
+.dvd-wrapper p,
+.dvd-wrapper h1,
+.dvd-wrapper h2,
+.dvd-wrapper h3,
+.dvd-wrapper h4,
+.dvd-wrapper h5,
+.dvd-wrapper h6 {
+  padding: 0;
+  margin: 0
+}
+
+.dvd-wrapper li {
+  list-style-type: none;
+}
+
+.dvd-wrapper i {
+  margin: 0px;
+  padding: 0px;
+  text-indent: 0px;
+  font-style: normal;
+}
+
+.dvd-wrapper img {
+  border: none;
+  max-width: 100%;
+}
+
+.dvd-wrapper a {
+  text-decoration: none;
+  color: #fff;
+}
+
+.dvd-wrapper a.active,
+.dvd-wrapper a:focus {
+  outline: none !important;
+  text-decoration: none;
+}
+
+.dvd-wrapper a:hover {
+  color: #06c;
+  text-decoration: none !important
+}
+
+.clearfix:after,
+.clearfix:before {
+  display: table;
+  content: " "
+}
+
+.clearfix:after {
+  clear: both
+}
+
+.pulll_left {
+  float: left;
+}
+
+.pulll_right {
+  float: right;
+}
+
+.text-w {
+  color: #ffe400
+}
+
+.text-d {
+  color: #ff0000
+}
+
+.text-s {
+  color: #14e144
+}
+
+.text-b {
+  color: #00deff
+}
+
+.head {
+  position: relative;
+  height: 80px;
+  background: url(./images/topbg.png) center bottom no-repeat;
+  background-size: 100% 100%;
+  margin-bottom: 10px;
+}
+
+/* 筛选控件：绝对定位到 head 右侧，垂直居中偏下（往上稍移） */
+.head-controls {
+  position: absolute;
+  right: 24px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+}
+
+/* Element Plus 日期/选择器在深色背景下的适配 */
+.head-controls :deep(.el-input__wrapper) {
+  background-color: rgba(0, 30, 70, 0.75);
+  box-shadow: 0 0 0 1px rgba(100, 210, 255, 0.4) inset;
+}
+.head-controls :deep(.el-input__inner),
+.head-controls :deep(.el-range-input) {
+  color: #a8d8ff;
+}
+.head-controls :deep(.el-range-separator) {
+  color: #a8d8ff;
+}
+.head-controls :deep(.el-input__prefix-icon),
+.head-controls :deep(.el-range__icon) {
+  color: #64d2ff;
+}
+
+/* 标题：绝对居中，不受筛选控件影响，完全自适应 */
+.head h1 {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font-size: 52px;
+  letter-spacing: 12px;
+  font-weight: 900;
+  font-style: italic;
+  color: #ffffff;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #ffffff 40%, #2b86ff 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 12px rgba(43, 134, 255, 0.6));
+  animation: titleGlow 3s ease-in-out infinite;
+  margin: 0;
+  line-height: 1.2;
+}
+
+@keyframes titleGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 12px rgba(0, 242, 255, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(0, 242, 255, 0.9));
+  }
+}
+
+.head .time {
+  position: absolute;
+  left: 40px;
+  line-height: 40px;
+  top: 0;
+  opacity: .7;
+  background-image: -webkit-linear-gradient(bottom, #2b86ff, #fff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.head .name {
+  position: absolute;
+  right: 40px;
+  line-height: 40px;
+  top: 0;
+  opacity: .7;
+  background-image: -webkit-linear-gradient(bottom, #2b86ff, #fff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.mainbox {
+  /* 占满 wrapper 中 head 以外的剩余空间 */
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-ul,
-li {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-@font-face {
-  font-family: 'LCdd';
-  src: url('./fonts/LCdd.TTF');
-}
-
-header {
-  height: 100px;
-  width: 100%;
-  background-color: transparent;
-  background: url(./images/53titlebg.png) no-repeat top center;
-  background-size: 100%;
-  text-align: center;
-  position: relative;
-  flex-shrink: 0;
-}
-
-header h1 {
-  font-size: 42px;
-  height: 50%;
-  margin: auto;
-  display: table;
-  font-weight: 500;
-  background-image: -webkit-linear-gradient(bottom, #86919e, #fff);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-header h1 span {
-  display: table-cell;
-  vertical-align: middle;
-}
-
-header p {
-  font-size: 18px;
-  background-image: -webkit-linear-gradient(bottom, #86919e, #fff);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* 右上角控件组样式 */
-.header-controls {
-  position: absolute;
-  right: 2%;
-  top: 10px;
+.nav1 {
   display: flex;
-  align-items: center;
-  gap: 15px;
-  z-index: 5;
-}
-
-.control-item {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.control-item::after {
-  content: ' \2304';
-  font-size: 14px;
-}
-
-/* 全屏按钮容器样式 */
-.screenfull-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 10px;
-  padding: 4px 4px;
-  cursor: pointer;
-  transition: all 0.3s;
-  border-radius: 3px;
-  background: rgba(0, 194, 194, 0.1);
-  border: 1px solid rgba(0, 194, 194, 0.3);
-}
-
-.screenfull-wrapper:hover {
-  background: rgba(0, 194, 194, 0.2);
-  border-color: rgba(0, 194, 194, 0.6);
-  box-shadow: 0 0 8px rgba(0, 194, 194, 0.3);
-}
-
-.screenfull-wrapper :deep(svg) {
-  fill: #00c2c2 !important;
-  color: #00c2c2 !important;
-  width: 16px;
-  height: 16px;
-  transition: all 0.3s;
-}
-
-.screenfull-wrapper:hover :deep(svg) {
-  fill: #00e5e5 !important;
-  color: #00e5e5 !important;
-  transform: scale(1.05);
-}
-
-/* 时间选择器样式 */
-.time-select-wrapper {
-  margin: 0 10px;
-}
-
-.time-select-wrapper :deep(.el-input__wrapper) {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(0, 194, 194, 0.5) !important;
-  box-shadow: 0 0 8px rgba(0, 194, 194, 0.2) !important;
-  transition: all 0.3s;
-}
-
-.time-select-wrapper :deep(.el-input__wrapper:hover) {
-  border-color: #00c2c2 !important;
-  box-shadow: 0 0 12px rgba(0, 194, 194, 0.4) !important;
-  background-color: #ffffff !important;
-}
-
-.time-select-wrapper :deep(.el-input__inner) {
-  color: #333 !important;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.time-select-wrapper :deep(.el-input__inner::placeholder) {
-  color: #999 !important;
-}
-
-.time-select-wrapper :deep(.el-icon) {
-  color: #00c2c2 !important;
-}
-
-/* 店铺选择器样式 */
-.store-select-wrapper {
-  width: 160px;
-  margin: 0 10px;
-}
-
-.store-select-wrapper :deep(.el-select) {
-  width: 100%;
-}
-
-.store-select-wrapper :deep(.el-input__wrapper) {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(0, 194, 194, 0.5) !important;
-  box-shadow: 0 0 8px rgba(0, 194, 194, 0.2) !important;
-  transition: all 0.3s;
-}
-
-.store-select-wrapper :deep(.el-input__wrapper:hover) {
-  border-color: #00c2c2 !important;
-  box-shadow: 0 0 12px rgba(0, 194, 194, 0.4) !important;
-  background-color: #ffffff !important;
-}
-
-.store-select-wrapper :deep(.el-input__inner) {
-  color: #333 !important;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.store-select-wrapper :deep(.el-input__inner::placeholder) {
-  color: #999 !important;
-}
-
-.store-select-wrapper :deep(.el-select__caret) {
-  color: #00c2c2 !important;
-}
-
-/* 下拉面板样式 */
-:deep(.el-select-dropdown) {
-  background: linear-gradient(135deg, #034a4e 0%, #031B18 100%) !important;
-  border: 1px solid #025E65 !important;
-  box-shadow: 0 4px 20px rgba(2, 94, 101, 0.5) !important;
-}
-
-:deep(.el-select-dropdown__item) {
-  color: #00c2c2 !important;
-  font-size: 13px;
-  transition: all 0.3s;
-}
-
-:deep(.el-select-dropdown__item:hover) {
-  background-color: rgba(2, 94, 101, 0.4) !important;
-  color: #00e5e5 !important;
-}
-
-:deep(.el-select-dropdown__item.selected) {
-  color: #00e5e5 !important;
-  font-weight: bold;
-  background-color: rgba(2, 94, 101, 0.3) !important;
-}
-
-/* 日期选择器下拉面板样式 */
-:deep(.el-picker-panel) {
-  background: linear-gradient(135deg, #034a4e 0%, #031B18 100%) !important;
-  border: 1px solid #025E65 !important;
-  box-shadow: 0 4px 20px rgba(2, 94, 101, 0.5) !important;
-}
-
-:deep(.el-date-picker__header-label) {
-  color: #00e5e5 !important;
-}
-
-:deep(.el-picker-panel__icon-btn) {
-  color: #00c2c2 !important;
-}
-
-:deep(.el-picker-panel__icon-btn:hover) {
-  color: #00e5e5 !important;
-}
-
-:deep(.el-date-table th) {
-  color: #00c2c2 !important;
-  border-bottom: 1px solid rgba(0, 194, 194, 0.2);
-}
-
-:deep(.el-date-table td) {
-  color: #00c2c2 !important;
-}
-
-:deep(.el-date-table td.available:hover) {
-  color: #00e5e5 !important;
-  background-color: rgba(2, 94, 101, 0.3) !important;
-}
-
-:deep(.el-date-table td.current:not(.disabled)) {
-  color: #000 !important;
-  background-color: #00c2c2 !important;
-  font-weight: bold;
-}
-
-:deep(.el-date-table td.today span) {
-  color: #00e5e5 !important;
-  font-weight: bold;
-}
-
-:deep(.el-date-table td.disabled) {
-  color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.main {
-  width: 100%;
+  align-items: stretch;
+  /* 占满 mainbox 全部高度 */
   flex: 1;
-  padding: 0 2.5%;
-  box-sizing: border-box;
-  position: relative;
+  min-height: 0;
+  padding-bottom: 0;
+  gap: 10px;
+}
+
+.nav1>li {
+  /* 每列撑满 nav1 高度，溢出内容隐藏（左/中列固定高内容正常展示） */
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav1>li>.box {
+  margin-bottom: 0;
+}
+
+/* ==================== 左侧列 ==================== */
+/* .col-left flex 布局由 li 统一定义 */
+
+.overview-box {
+  flex: 4; /* 约占 40% */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-box .boxnav {
+  flex: 1;
+  min-height: 0;
+  height: auto !important;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.overview-box .drqk {
+  height: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: space-around;
+}
+
+.overview-box .drqk li {
+  height: 33.33%;
+  width: 50%;
+  float: none;
+  display: flex;
+  align-items: center;
+}
+
+/* ==================== 流量趋势柱线混合图 ==================== */
+/* 中间列：flex 纵向排列，撑满 nav1 高度 */
+/* .traffic-col flex 布局由 li 统一定义 */
+
+/* 地图 box：高度自适应内容（557px map + tit），不参与 flex 伸缩 */
+.map-box {
+  flex: 2; /* 约占 66% */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#map {
+  flex: 1;
+  min-height: 0;
+  height: auto !important;
+}
+
+/* 流量图 box：占满地图以下所有剩余空间 */
+.traffic-box {
+  flex: 1; /* 约占 33% */
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
   min-height: 0;
 }
 
-.main .top5 {
-  width: 17.5%;
-  height: 70%;
-  float: left;
+.traffic-chart-dom {
+  flex: 1;
+  min-height: 0;
 }
 
-.main .top5 .top5-title {
-  width: 100%;
-  height: 10%;
-  background: url(./images/title.png) no-repeat center;
-  background-size: 100%;
-  color: #fff;
-  text-align: center;
+/* ==================== 类目销售玫瑰图 ==================== */
+.rose-box {
+  flex: 6; /* 约占 60% */
   display: flex;
   flex-direction: column;
+  min-height: 0;
+}
+
+.rose-charts-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 10px;
+  padding: 4px 6px 8px;
+  min-height: 0;
+}
+
+.rose-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rose-sub-title {
+  text-align: center;
+  font-size: 12px;
+  color: #7ec4ff;
+  margin-bottom: 2px;
+  letter-spacing: 1px;
+}
+
+.rose-chart-dom {
+  flex: 1;
+  min-height: 0; /* 移除固定最小高度 */
+}
+
+/* 右侧订单列：纵向 flex，撑满 nav1 高度（即 mainbox 高度） */
+/* .order-col flex 布局由 li 统一定义 */
+
+/* 右侧订单面板：占满剩余高度 */
+.order-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+  min-height: 0;
+}
+
+/* 滚动容器：flex 自动占满 .order-box 内除 .tit 以外的所有空间，并支持纵向滚动 */
+.order-scroll-wrap {
+  flex: 1;
+  min-height: 0; /* 关键：防止 flex 子元素撑破父容器 */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 200, 255, 0.35) transparent;
+}
+.order-scroll-wrap::-webkit-scrollbar {
+  width: 4px;
+}
+.order-scroll-wrap::-webkit-scrollbar-thumb {
+  background: rgba(100, 200, 255, 0.35);
+  border-radius: 2px;
+}
+
+.box {
+  margin-bottom: 0;
+  position: relative;
+}
+
+.map {
+  position: absolute;
+  z-index: 10;
+  opacity: .8;
+  top: 10%;
+  width: 70%;
+  height: 80%;
+  left: 15%;
+}
+
+.map1,
+.map2,
+.map3 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 25px;
+}
+
+.map1 {
+  z-index: 2;
+  animation: myfirst2 15s infinite linear;
+  display: flex;
+}
+
+.map2 {
+  z-index: 3;
+  opacity: 0.2;
+  animation: myfirst 10s infinite linear;
+}
+
+.map3 {
+  z-index: 1;
+}
+
+.map1 img {
+  width: 100%
+}
+
+.map2 img {
+  width: 82%
+}
+
+.map3 img {
+  width: 80%
+}
+
+.tit {
+  display: flex;
+  align-items: flex-end;
+}
+
+.tit span {
+  background: url(./images/line1.png) no-repeat bottom right;
+  font-size: 20px;
+  white-space: nowrap;
+  padding-bottom: 10px;
+  padding-right: 20px;
+  background-image: -webkit-linear-gradient(bottom, #2b86ff, #fff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tit p {
+  background: url(./images/line2.png) no-repeat bottom right;
+  width: 100%;
+  height: 13px;
+  margin-bottom: 5px;
+  opacity: .5
+}
+
+.boxnav {
   padding: 10px 0;
 }
 
-.main .top5 .top5-title > span {
-  margin-bottom: 8px;
+.anchorBL,
+.BMap_cpyCtrl {
+  display: none;
 }
 
-.main .top5 .top5-title .sort-switch {
-  margin-top: 5px;
+#lg-counter {
+  display: none;
 }
 
-.main .top5 .top5-title .sort-switch :deep(.el-radio-group) {
-  display: flex;
-}
-
-.main .top5 .top5-title .sort-switch :deep(.el-radio-button__inner) {
-  background-color: rgba(0, 194, 194, 0.1);
-  border-color: rgba(0, 194, 194, 0.3);
-  color: #00c2c2;
-  font-size: 12px;
-  padding: 6px 12px;
-  transition: all 0.3s;
-}
-
-.main .top5 .top5-title .sort-switch :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-  background-color: #00c2c2;
-  border-color: #00c2c2;
-  color: #fff;
-  box-shadow: 0 0 8px rgba(0, 194, 194, 0.5);
-}
-
-.main .top5 .top5-title .sort-switch :deep(.el-radio-button__inner:hover) {
-  color: #00e5e5;
-  border-color: rgba(0, 194, 194, 0.6);
-}
-
-.main .top5 .top5-content {
-  width: 100%;
-  height: 80%;
-}
-
-.main .top5 .top5-content ul {
-  width: 100%;
-  height: 100%;
-}
-
-.main .top5 .top5-content ul li {
-  width: 100%;
-  height: 15%;
-  margin-top: 5%;
-  position: relative;
-}
-
-.main .top5 .top5-content ul li .li-content {
-  width: 90%;
-  height: 100%;
-  margin-left: 5%;
-  background: url(./images/border.png) no-repeat center;
-  background-size: contain;
+.table1 th {
+  border-bottom: 1px solid #407abd;
   font-size: 14px;
-  padding-left: 15%;
-  padding-top: 6%;
+  padding: 10px 0;
+  color: rgba(255, 255, 255, .8)
+}
+
+.table1 td {
+  border-bottom: 1px dotted#407abd;
+  font-size: 14px;
+  padding: 10px 0;
+  color: rgba(255, 255, 255, 1)
+}
+
+.table1 tr:last-child td {
+  border: none;
+}
+
+.table1 td span {
+  font-size: 12px;
+  transform: scale(.8);
+  display: inline-block;
+}
+
+.tqdb {
+  height: 100%;
+}
+
+.tqdb li {
+  height: 50%;
+  float: left;
+  width: 33.333%;
+  text-align: center;
+}
+
+.tqdb li div {
+  height: calc(100% - 25px);
+}
+
+.tqdb li h3 {
+  font-size: 13px;
   color: #fff;
-  box-sizing: border-box;
 }
 
-.main .top5 .top5-content ul li .li-content span {
-  margin-right: 2%;
+.jbgc {
+  height: 100%;
+  position: relative
 }
 
-.main .top5 .top5-content ul li .cicle {
-  content: '';
-  display: block;
+.jbgc li {
+  height: 100%;
+  float: right;
+}
+
+.jbgc li:nth-child(1) {
+  height: 30%;
   position: absolute;
-  width: 35px;
-  height: 35px;
-  background: url(./images/green.png) no-repeat center;
-  background-size: 100%;
   left: 0;
-  bottom: 0;
 }
 
-/* Initial state for first item, though JS will override */
-.main .top5 .top5-content ul li:nth-of-type(1) .li-content {
-  background: url(./images/border2.png) no-repeat center;
-  background-size: contain;
+.jztxt div {
+  padding: 20px 0 0 0;
+  line-height: 120%;
 }
 
-.main .top5 .top5-content ul li:nth-of-type(1) .cicle {
-  background: url(./images/orange.png) no-repeat center;
-  background-size: 100%;
+.jztxt div i {
+  font-size: 12px;
+  color: #fff;
 }
 
-.main .total {
-  width: 65%;
+.jztxt div h3 {
+  font-size: 20px;
+  color: #00deff;
+  font-family: electronicFont;
+}
+
+.jztxt div span {
+  font-size: 13px;
+  opacity: .5
+}
+
+.jcjg {
+  height: 100%;
+  margin-left: -10px;
+  margin-right: -10px;
+}
+
+.jcjg li {
+  width: 33.33333%;
   height: 100%;
   float: left;
-  position: relative;
-}
-
-.main .total .rain {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: -1;
-}
-
-.main .total .data1,
-.main .total .data2,
-.main .total .data3,
-.main .total .data4 {
-  width: 160px;
-  height: 80px;
-  position: absolute;
-}
-
-.main .total .data1 span,
-.main .total .data2 span,
-.main .total .data3 span,
-.main .total .data4 span {
-  color: #0ac1c7;
-  font-size: 16px;
-  font-family: '宋体';
-}
-
-.main .total .data1 p,
-.main .total .data2 p,
-.main .total .data3 p,
-.main .total .data4 p {
-  font-family: 'LCdd';
-  font-size: 28px;
-  color: #f29701;
-}
-
-.main .total .data1 {
-  left: 10%;
-  top: 12%;
-}
-
-.main .total .data2 {
-  left: 42%;
-  top: 3%;
-}
-
-.main .total .data3 {
-  left: 62%;
-  top: 5%;
-}
-
-.main .total .data4 {
-  left: 73%;
-  top: 28%;
-}
-
-.main .total .dashed {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
-.main .total .sphere {
-  width: 400px;
-  height: 400px;
-  position: relative;
-  margin: 14% auto 0;
-}
-
-.main .total .sphere .sphere-bg {
-  position: absolute;
-  z-index: 100;
-  left: 0;
-  top: 0;
-  width: 100%;
   height: 100%;
-  background: url(./images/53earth.png) no-repeat center;
-  background-size: contain;
+  padding: 0 10px;
 }
 
-.main .total .sphere .sum {
-  position: absolute;
-  z-index: 100;
-  left: 0;
-  top: 0;
+.jcjg h3 {
+  background: url(./images/tit1.png) center right no-repeat;
+  margin-bottom: 15px;
+  font-weight: normal;
+  font-size: 15px;
+}
+
+.jcnav {
+  position: relative;
+  background: url(./images/bg1.png) no-repeat left center;
+  height: 160px;
   width: 100%;
-  height: 100%;
-  background: url(./images/53cloud.png) no-repeat center;
-  background-size: 55%;
 }
 
-.main .total .sphere .sum span {
-  display: block;
-  margin-top: 30%;
-  padding-left: 32%;
-  color: #005a79;
-  font-size: 18px;
+.jcnav2 {
+  background: url(./images/bg2.png) no-repeat left center;
+  height: 200px;
 }
 
-.main .total .sphere .sum p {
-  margin-top: 2%;
-  text-align: center;
-  color: #003c63;
-  font-family: 'LCdd';
-  font-size: 36px;
-}
-
-.main .total .cicle3 {
-  width: 700px;
-  height: 700px;
-  background: url(./images/circle.png) no-repeat center;
-  background-size: 100%;
+.jcnav img {
   position: absolute;
-  top: 20%;
-  left: 50%;
-  transform-style: preserve-3d;
-  transform: translateX(-50%) rotateX(75deg);
-  animation: rotate3 20s linear infinite;
-}
-
-.main .total .cicle4 {
-  width: 300px;
-  height: 300px;
-  position: absolute;
-  top: 60%;
-  left: 50%;
-  transform-style: preserve-3d;
-  background: url(./images/53gqright.png) no-repeat center;
-  background-size: 100%;
-  transform: translateX(-50%) rotateX(75deg);
-  animation: rotate3 2s linear infinite;
-}
-
-.main .total .cicle5 {
-  width: 300px;
-  height: 300px;
-  position: absolute;
-  top: 62%;
-  left: 50%;
-  transform-style: preserve-3d;
-  background: url(./images/53gqleft.png) no-repeat center;
-  background-size: 100%;
-  transform: translateX(-50%) rotateX(75deg);
-  animation: rotate4 2s linear infinite;
-}
-
-.main .total .cicle6 {
-  width: 240px;
-  height: 240px;
-  position: absolute;
-  top: 70%;
-  left: 50%;
-  transform-style: preserve-3d;
-  background: url(./images/535gqbottomright.png) no-repeat center;
-  background-size: 100%;
-  transform: translateX(-50%) rotateX(75deg);
-  animation: rotate3 2s linear infinite;
-}
-
-.main .total .cicle7 {
-  width: 240px;
-  height: 240px;
-  position: absolute;
-  top: 72%;
-  left: 50%;
-  transform-style: preserve-3d;
-  background: url(./images/53gqbottomleft.png) no-repeat center;
-  background-size: 100%;
-  transform: translateX(-50%) rotateX(75deg);
-  animation: rotate4 2s linear infinite;
-}
-
-.main .total .cicle8,
-.main .total .cicle9,
-.main .total .cicle10 {
-  width: 100px;
-  height: 100px;
-  position: absolute;
+  left: 14px;
   top: 50%;
-  left: 50%;
-  z-index: 100;
-  margin-left: -50px;
-  border-radius: 50%;
+  margin-top: -24px;
 }
 
-.main .total .cicle8 span,
-.main .total .cicle9 span,
-.main .total .cicle10 span {
-  font-family: 'LCdd';
-  display: block;
-  margin-left: 25%;
-  font-size: 28px;
-  margin-top: 20%;
+.jcnav2 img {
+  left: 16px;
+  margin-top: -30px;
 }
 
-.main .total .cicle8 p,
-.main .total .cicle9 p,
-.main .total .cicle10  p {
-  text-align: center;
+.jcnavp {
+  padding-left: 98px;
+}
+
+.jcnavp>div {
+  border: 1px solid #1070aa;
+  display: flex;
   font-size: 14px;
+  align-items: center;
+  padding: 5px 10px;
+  margin-bottom: 26px;
+  height: 36px;
 }
 
-.main .total .cicle8 {
-  background: url(./images/circle1.png) no-repeat;
-  background-size: 100%;
-  animation: rotate5 20s linear infinite;
-  color: #f29701;
+.jcnav2 .jcnavp>div {
+  margin-bottom: 17px;
 }
 
-.main .total .cicle9 {
-  background: url(./images/circle2.png) no-repeat;
-  background-size: 100%;
-  animation: rotate6 20s linear infinite;
-  color: #0ac1c7;
+.jcnavp>div ol {
+  white-space: nowrap;
 }
 
-.main .total .cicle10 {
-  background: url(./images/circle1.png) no-repeat;
-  background-size: 100%;
-  animation: rotate7 20s linear infinite;
-  color: #f29701;
+.jcnavp>div span {
+  padding-left: 10px;
+  color: #00e4ff;
+  white-space: nowrap;
 }
 
-
-
-.main .analyse {
-  width: 17.5%;
-  height: 70%;
-  float: left;
-}
-
-.main .analyse .analyse-title {
-  width: 100%;
-  height: 10%;
-  background: url(./images/title.png) no-repeat center;
-  background-size: 100%;
-  color: #fff;
-  text-align: center;
-  display: table;
-  font-size: 25px;
-}
-
-.main .analyse .analyse-title span {
-  display: table-cell;
-  vertical-align: middle;
-}
-
-.main .analyse ul {
-  width: 100%;
-  height: 60%;
-}
-
-.main .analyse ul li {
-  width: 100%;
-  height: 30%;
-  margin: 3%;
-}
-
-.main .analyse ul li img {
-  height: 80%;
-  float: left;
-  vertical-align: 0%;
-}
-
-.main .analyse ul li h5 {
-  float: left;
-  color: #fff;
-  margin-left: 5%;
-}
-
-.main .analyse ul li span {
-  font-size: 20px;
-  float: left;
-  color: #fff;
-  margin-left: 5%;
-}
-
-.main .analyse ul li em {
-  font-style: normal;
-  font-size: 24px;
-  margin-left: 5%;
-  color: #0ac1c7;
-}
-
-.main .analyse ul li:nth-of-type(1) em {
-  color: #f29701;
-}
-
-.main .analyse .execution {
-  width: 100%;
-  height: 30%;
-  background: url(./images/execution.png) no-repeat;
-  background-size: contain;
-  overflow: hidden;
-  position: relative;
-}
-
-.main .analyse .execution .title {
-  writing-mode: vertical-lr;
-  font-size: 20px;
-  margin-left: 3%;
-  margin-top: 3%;
-  color: #fff;
-}
-
-.main .analyse .execution .cicle1,
-.main .analyse .execution .cicle2 {
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  background: url(./images/2222.png) no-repeat center;
-  background-size: 100%;
-  transform-style: preserve-3d;
-  transform: rotateX(75deg);
-  animation: rotate2 1s linear infinite;
-}
-
-.main .analyse .execution .cicle1 {
-  top: 47%;
-  left: 20%;
-}
-
-.main .analyse .execution .cicle2 {
-  top: 47%;
-  left: 63%;
-}
-
-.main .analyse .execution .waterChart1,
-.main .analyse .execution .waterChart2 {
-  position: absolute;
-  width: 80px;
-  height: 100px;
-}
-
-.main .analyse .execution .waterChart1 .chart-title,
-.main .analyse .execution .waterChart2 .chart-title {
-  height: 20%;
+.jcnavp>div i {
   font-size: 12px;
-  text-align: center;
-  color: #fff;
+  padding-left: 5px;
 }
 
-.main .analyse .execution .waterChart1 .chart1,
-.main .analyse .execution .waterChart2 .chart1,
-.main .analyse .execution .waterChart1 .chart2,
-.main .analyse .execution .waterChart2 .chart2 {
-  width: 100%;
-  height: 80%;
-}
-
-.main .analyse .execution .waterChart1 {
-  top: 0%;
-  left: 20%;
-}
-
-.main .analyse .execution .waterChart2 {
-  top: 0%;
-  left: 63%;
-}
-
-.main .sale {
-  width: 27.5%;
-  height: 30%;
-  position: absolute;
-  bottom: 0;
-  left: 2.5%;
-}
-
-.main .sale ul {
-  width: 100%;
+.ylfw {
   height: 100%;
+  margin-left: -5px;
+  margin-right: -5px;
+}
+
+.ylfw li {
+  width: 50%;
+  height: 33.33333%;
+  float: left;
+  padding: 0 5px;
+}
+
+.ylfwbox {
+  height: 85%;
+  border: 1px solid #1070aa;
+  padding: 10px 15px;
+  position: relative;
+}
+
+.fora {
+  position: relative;
+}
+
+.forb {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  bottom: 0;
+}
+
+.fora:before,
+.fora:after,
+.forb:before,
+.forb:after {
+  position: absolute;
+  content: "";
+  width: 2px;
+  height: 2px;
+  border: 1px solid #00deff;
+  opacity: .8;
+  box-shadow: 0 0 5px #00deff;
+}
+
+.fora:before,
+.forb:before {
+  left: -2px;
+  top: -2px;
+}
+
+.fora:after,
+.forb:after {
+  right: -2px;
+  top: -2px;
+}
+
+.ylfwbox p {
+  font-size: 13px;
+}
+
+.ylfwbox ol i {
+  font-size: 12px;
+}
+
+.ylfwbox ol em {
+  font-size: 14px;
+  font-style: normal;
+  padding: 0 5px;
+}
+
+.ylfwbox ol span {
+  font-size: 24px;
+  color: #00deff;
+  text-shadow: 0 0 5px #00deff;
+  font-family: electronicFont;
+}
+
+.drqk {
+  height: 100%;
+}
+
+.drqk li {
+  height: 33.33333333%;
+  width: 50%;
+  float: left;
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  background: url(./images/iconbg.png);
+  width: 63px;
+  height: 63px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 15px;
+}
+
+.drqk li span {
+  opacity: .5;
+  font-size: 15px;
+}
+
+.drqk li i {
+  padding-left: 10px;
+}
+
+.drqk li em {
+  background: linear-gradient(0deg, #45d3fd, #45d3fd, #61ddb1, #61ddb1);
+  font-style: normal;
+  background-size: cover;
+  font-family: electronicFont;
+  font-size: 30px;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes myfirst2 {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(359deg);
+  }
+}
+
+@keyframes myfirst {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(-359deg);
+  }
+}
+
+.back-btn {
+  position: absolute;
+  left: 13%;
+  bottom: 12%;
+  color: rgb(100, 210, 255);
+  background: rgba(0, 60, 120, 0.6);
+  border: 1px solid rgba(100, 210, 255, 0.5);
+  padding: 3px 27px;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 1200;
+}
+
+/* ===== 订单信息滚动列表 ===== */
+
+.order-card {
+  background: rgba(0, 40, 90, 0.55);
+  border: 1px solid rgba(100, 180, 255, 0.18);
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.order-card:hover {
+  background: rgba(0, 60, 120, 0.7);
+  border-color: rgba(100, 200, 255, 0.4);
+}
+
+.order-card-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.order-card-top {
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.order-card-bottom {
+  justify-content: space-between;
+  margin-top: 2px;
+  color: rgba(180, 210, 255, 0.75);
+}
+
+.order-no {
+  font-size: 11px;
+  color: rgba(140, 190, 255, 0.8);
+  max-width: 130px;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
-.main .sale ul li {
-  width: 100%;
-  height: 30%;
-  margin-top: 1%;
+.order-product {
+  color: #c8e0ff;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
 }
-
-.main .sale ul li .showImg {
-  float: left;
-  width: 10%;
-  height: 100%;
-  text-align: center;
-}
-
-.main .sale ul li .showImg img {
-  vertical-align: 0%;
-  width: 70%;
-  margin-top: 30%;
-}
-
-.main .sale ul li .data {
-  float: left;
-  width: 10%;
-  height: 100%;
-  text-align: center;
-}
-
-.main .sale ul li .data span {
-  color: #fff;
+.order-amount {
+  color: #ffe066;
+  font-weight: bold;
   font-size: 13px;
+  min-width: 60px;
+}
+.order-store-name {
+  color: rgba(160, 200, 255, 0.9);
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
-.main .sale ul li .data span:nth-of-type(2) {
-  color: #0ac1c7;
+.order-card-sku {
+  justify-content: space-between;
+  color: rgba(160, 190, 240, 0.65);
 }
 
-.main .sale ul li .shoeChart,
-.main .sale ul li .clothesChart,
-.main .sale ul li .mzChart {
-  height: 100%;
-  width: 75%;
-  float: left;
+.order-sku {
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
 }
 
-.main .barChart {
-  width: 27.5%;
-  height: 30%;
+.order-count {
+  font-size: 11px;
+  white-space: nowrap;
+  margin-left: 6px;
+  color: rgba(200, 220, 255, 0.7);
+}
+.order-time {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* 订单状态标签 */
+.order-status {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.status-done {
+  color: #52e5a0;
+  background: rgba(82, 229, 160, 0.12);
+  border: 1px solid rgba(82, 229, 160, 0.35);
+}
+.status-refund {
+  color: #ff7875;
+  background: rgba(255, 120, 117, 0.12);
+  border: 1px solid rgba(255, 120, 117, 0.35);
+}
+.status-pending {
+  color: #64d2ff;
+  background: rgba(100, 210, 255, 0.12);
+  border: 1px solid rgba(100, 210, 255, 0.3);
+}
+
+/* 加载/无更多提示 */
+.order-tip {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(150, 190, 255, 0.5);
+  padding: 8px 0;
+}
+
+.toggle-btn {
   position: absolute;
-  bottom: 32%;
-  right: 2.5%;
+  left: 13%;
+  bottom: calc(5% + 0px);
+  color: rgb(100, 210, 255);
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 1200;
+  background: rgba(0, 60, 120, 0.6);
+  border: 1px solid rgba(100, 210, 255, 0.5);
+  padding: 3px 10px;
+  border-radius: 4px;
+  user-select: none;
+  transition: background 0.2s;
 }
 
-.main .lineChart {
-  width: 27.5%;
-  height: 30%;
-  position: absolute;
-  bottom: 0;
-  right: 2.5%;
-}
-
-.bottom {
-  width: 100%;
-  height: 10%;
-  background: url(./images/53bottomsjbg.png) no-repeat bottom center;
-  background-size: 100%;
-  text-align: center;
-}
-
-.bottom h5 {
-  background-image: -webkit-linear-gradient(bottom, #86919e, #fff);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  height: 40%;
-  display: table;
-  margin: auto;
-}
-
-.bottom h5 span {
-  display: table-cell;
-  vertical-align: middle;
-}
-
-.bottom {
-  flex-shrink: 0;
-}
-
-.bottom p {
-  color: #0ac1c7;
-  font-size: 13px;
-}
-header {
-  height: 100px;
-  width: 100%;
-  background-color: transparent;
-  background: url(./images/53titlebg.png) no-repeat top center;
-  background-size: 100%;
-  text-align: center;
-  position: relative;
-  flex-shrink: 0;
-  display: flex; /* 新增 */
-  align-items: center; /* 新增：垂直居中 */
-  justify-content: center; /* 新增：水平居中 */
-}
-.header-title {
-  text-align: center;
-  position: relative;
-  z-index: 5;
-  margin-top: 0; /* 改为 0，原来是 -10px */
-}
-
-.header-title h1 {
-  font-size: 52px; /* 增大标题字号 */
-  letter-spacing: 12px;
-  font-weight: 900;
-  font-style: italic; /* 字体倾斜 */
-  color: #ffffff;
-  text-transform: uppercase;
-  background: linear-gradient(180deg, #ffffff 40%, #00f2ff 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 12px rgba(0, 242, 255, 0.6));
-  animation: titleGlow 3s ease-in-out infinite;
-  margin: 0 auto; /* 新增：自动左右边距，实现居中 */
-  display: block; /* 新增 */
-}
-@keyframes rotate {
-  0% {
-    transform: rotate(0);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes rotate2 {
-  0% {
-    transform: rotateX(75deg) rotateZ(0);
-  }
-  100% {
-    transform: rotateX(75deg) rotateZ(360deg);
-  }
-}
-
-@keyframes rotate3 {
-  0% {
-    transform: translateX(-50%) rotateX(75deg) rotateZ(0);
-  }
-  100% {
-    transform: translateX(-50%) rotateX(75deg) rotateZ(360deg);
-  }
-}
-
-@keyframes rotate4 {
-  0% {
-    transform: translateX(-50%) rotateX(75deg) rotateZ(0);
-  }
-  100% {
-    transform: translateX(-50%) rotateX(75deg) rotateZ(-360deg);
-  }
-}
-
-@keyframes rotate5 {
-  0% {
-    transform: matrix3d(0.9, 0, 0, 0, 0, 0.9, 0, 0, 0, 0, 1, 0, 270, 0, 0, 1);
-    z-index: 100;
-  }
-  50% {
-    transform: matrix3d(0.9, 0, 0, 0, 0, 0.9, 0, 0, 0, 0, 1, 0, -270, 0, 0, 1);
-    z-index: 100;
-  }
-  100% {
-    transform: matrix3d(0.9, 0, 0, 0, 0, 0.9, 0, 0, 0, 0, 1, 0, 270, 0, 0, 1);
-    z-index: 100;
-  }
-}
-
-@keyframes rotate6 {
-  0% {
-    transform: matrix3d(1.23268, 0, 0, 0, 0, 1.23268, 0, 0, 0, 0, 1, 0, -16.95344, 99.80267, 0, 1);
-    z-index: 100.99803;
-  }
-  50% {
-    transform: matrix3d(1.23268, 0, 0, 0, 0, 1.23268, 0, 0, 0, 0, 1, 0, 16.95344, 99.80267, 0, 1);
-    z-index: 100.99803;
-  }
-  100% {
-    transform: matrix3d(1.23268, 0, 0, 0, 0, 1.23268, 0, 0, 0, 0, 1, 0, -16.95344, 99.80267, 0, 1);
-    z-index: 100.99803;
-  }
-}
-
-@keyframes rotate7 {
-  0% {
-    transform: matrix3d(0.85822, 0, 0, 0, 0, 0.85822, 0, 0, 0, 0, 1, 0, -267.87097, -12.53332, 0, 1);
-    z-index: 99.87467;
-  }
-  50% {
-     transform: matrix3d(0.85822, 0, 0, 0, 0, 0.85822, 0, 0, 0, 0, 1, 0, 267.87097, -12.53332, 0, 1);
-    z-index: 99.87467;
-  }
-  100% {
-    transform: matrix3d(0.85822, 0, 0, 0, 0, 0.85822, 0, 0, 0, 0, 1, 0, -267.87097, -12.53332, 0, 1);
-    z-index: 99.87467;
-  }
-}
-
-@keyframes rotate8 {
-  0% {
-    transform: matrix3d(0.57257, 0, 0, 0, 0, 0.57257, 0, 0, 0, 0, 1, 0, 50.59331, -98.2287, 0, 1);
-    z-index: 99.01771;
-  }
-  50% {
-    transform: matrix3d(0.57257, 0, 0, 0, 0, 0.57257, 0, 0, 0, 0, 1, 0, -50.59331, -98.2287, 0, 1);
-    z-index: 99.01771;
-  }
-  100% {
-    transform: matrix3d(0.57257, 0, 0, 0, 0, 0.57257, 0, 0, 0, 0, 1, 0, 50.59331, -98.2287, 0, 1);
-    z-index: 99.01771;
-  }
+.toggle-btn:hover {
+  background: rgba(0, 100, 180, 0.8);
 }
 </style>

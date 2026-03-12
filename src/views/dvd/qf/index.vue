@@ -14,19 +14,7 @@
         <!-- <div class="header-time">{{ currentTime }}</div> -->
       </div>
       <div class="header-controls">
-          <!-- 日期选择器 -->
-      <div class="time-select-wrapper">
-        <el-date-picker
-          v-model="selectedDate"
-          type="date"
-          placeholder="选择日期"
-          size="small"
-          clearable
-          @change="handleDateChange"
-          style="width: 160px"
-        >
-        </el-date-picker>
-      </div>
+          
 
         <div class="store-select-wrapper">
           <el-select v-model="selectedStore" placeholder="选择店铺" size="small" clearable @change="handleStoreChange">
@@ -1089,20 +1077,6 @@ export default {
   z-index: 1;
 }
 
-/* 底部发光装饰线 */
-.header-line-bottom {
-  position: absolute;
-  bottom: 0;
-  left: 25%;
-  width: 50%;
-  height: 4px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    #00f2ff 50%, 
-    transparent 100%);
-  box-shadow: 0 0 20px #00f2ff, 0 0 40px rgba(0, 242, 255, 0.5);
-  z-index: 4;
-}
 
 /* 两侧的连接线 */
 .header-line-bottom::before,
