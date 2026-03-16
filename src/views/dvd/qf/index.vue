@@ -14,7 +14,20 @@
         <!-- <div class="header-time">{{ currentTime }}</div> -->
       </div>
       <div class="header-controls">
-          
+        <div class="date-range-wrapper">
+          <el-date-picker
+            v-model="selectedDateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            size="small"
+            clearable
+            value-format="YYYY-MM-DD"
+            style="width: 240px"
+            @change="handleFilterChange"
+          />
+        </div>
 
         <div class="store-select-wrapper">
           <el-select v-model="selectedStore" placeholder="选择店铺" size="small" clearable @change="handleStoreChange">

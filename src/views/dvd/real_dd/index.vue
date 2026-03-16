@@ -23,36 +23,62 @@
     </header>
 
     <div class="main">
-      <!-- top5 -->
-      <div class="top5">
-        <div class="top5-title">
-          <span>店铺</span>
-          <div class="sort-switch">
-            <el-radio-group v-model="sortBy" size="small" @change="loadStoreTop5">
-              <el-radio-button label="amount">成交金额</el-radio-button>
-              <el-radio-button label="orders">订单数</el-radio-button>
-            </el-radio-group>
+      <!-- 左列：top5 + sale -->
+      <div class="col-left">
+        <div class="top5">
+          <div class="top5-title">
+            <span>店铺</span>
+            <div class="sort-switch">
+              <el-radio-group v-model="sortBy" size="small" @change="loadStoreTop5">
+                <el-radio-button label="amount">成交金额</el-radio-button>
+                <el-radio-button label="orders">订单数</el-radio-button>
+              </el-radio-group>
+            </div>
+          </div>
+          <div class="top5-content">
+            <ul ref="top5ListRef">
+              <li v-for="(item, index) in brandTop5" :key="index">
+                <div class="cicle"></div>
+                <div class="li-content">
+                  <span>{{ item.name }}</span>
+                  <span>{{ item.sales }}</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <br><br>
+          <div class="top5-title">
+            
+            <span>退款&投比</span>
           </div>
         </div>
-        <div class="top5-content">
-          <ul ref="top5ListRef">
-            <li v-for="(item, index) in brandTop5" :key="index">
-              <div class="cicle"></div>
-              <div class="li-content">
-                <span>{{ item.name }}</span>
-                <span>{{ item.sales }}</span>
-                <!-- <span>{{ item.rate }}%</span> -->
-                <!-- <span><img :src="item.trend === 'up' ? upIcon : downIcon" alt="趋势图标"></span> -->
+        <!-- sale 退款率 / 投放费比 -->
+        <div class="sale">
+          <ul>
+            <li>
+              <div class="showImg">
+                <img src="./images/shoe.png" alt="鞋类">
               </div>
+              <div class="data">
+                <span>退款率</span>
+              </div>
+              <div class="shoeChart" ref="shoeChartRef"></div>
+            </li>
+            <li>
+              <div class="showImg">
+                <img src="./images/clothes.png" alt="服装">
+              </div>
+              <div class="data">
+                <span>投放费比</span>
+              </div>
+              <div class="clothesChart" ref="clothesChartRef"></div>
             </li>
           </ul>
         </div>
-        <div class="top5-title">
-          <span>退款&投比</span>
-        </div>
       </div>
-      <!-- 销售总额 -->
-      <div class="total" ref="totalRef">
+
+      <!-- 中间：销售总额 -->
+      <div class="col-center total" ref="totalRef">
         <div class="data1">
           <span>用户支付金额</span>
           <p>{{ salesMetrics.payAmt }}</p>
@@ -69,17 +95,14 @@
           <span>退款金额(支付时间)</span>
           <p>{{ salesMetrics.refundAmtPayTime }}</p>
         </div>
-
         <div class="data5">
           <span>待发货</span>
           <p>{{ salesMetrics.unsend }}</p>
         </div>
-
         <div class="data6">
           <span>退款订单数</span>
           <p>{{ salesMetrics.refundOrderCnt }}</p>
         </div>
-
         <canvas class="rain" ref="rainRef"></canvas>
         <canvas class="dashed" ref="dashedRef"></canvas>
         <div class="sphere">
@@ -106,84 +129,33 @@
           <span>{{ salesMetrics.metrics?.conversionRate }}%</span>
           <p>转化率</p>
         </div>
+      </div>
 
-      </div>
-      <!-- 销售分析 -->
-      <div class="analyse">
-        <div class="analyse-title">
-          <span>销售分析</span>
-        </div>
-        
-        <!-- <ul>
-          <li>
-            <img src="./images/s1.png" alt="会销目标">
-            <h5>会销目标</h5><br>
-            <span>Marketing Target</span><br>
-            <em>￥{{ meetingMetrics.target?.toLocaleString() }}</em>
-          </li>
-          <li>
-            <img src="./images/s3.png" alt="会销实际">
-            <h5>会销实际</h5><br>
-            <span>Marketing Actual</span><br>
-            <em>￥{{ meetingMetrics.actual?.toLocaleString() }}</em>
-          </li>
-          <li>
-            <img src="./images/s2.png" alt="会销占比">
-            <h5>会销占比</h5><br>
-            <span>Marketing Ratio</span><br>
-            <em>￥{{ meetingMetrics.ratio?.toLocaleString() }}</em>
-          </li> -->
-        <!-- </ul> -->
-        <div class="execution">
-          <div class="title">核心转化</div>
-          <div class="cicle1"></div>
-          <div class="cicle2"></div>
-          <div class="waterChart1">
-            <div class="chart-title">商品点击(成交转化率(次数))</div>
-            <div class="chart1" ref="chart1Ref"></div>
+      <!-- 右列：销售分析 + 图表 -->
+      <div class="col-right">
+        <div class="analyse">
+          <div class="analyse-title">
+            <span>销售分析</span>
           </div>
-          <div class="waterChart2">
-            <div class="chart-title">商品曝光(点击转化率)</div>
-            <div class="chart2" ref="chart2Ref"></div>
+          <div class="execution">
+            <div class="title">核心转化</div>
+            <div class="cicle1"></div>
+            <div class="cicle2"></div>
+            <div class="waterChart1">
+              <div class="chart-title">商品点击(成交转化率(次数))</div>
+              <div class="chart1" ref="chart1Ref"></div>
+            </div>
+            <div class="waterChart2">
+              <div class="chart-title">商品曝光(点击转化率)</div>
+              <div class="chart2" ref="chart2Ref"></div>
+            </div>
           </div>
         </div>
+        <!-- 柱状图 - 支出金额 -->
+        <div class="barChart" ref="barChartRef"></div>
+        <!-- 折线图 -->
+        <div class="lineChart" ref="lineChartRef"></div>
       </div>
-      <div class="sale">
-        <ul>
-          <li>
-            <div class="showImg">
-              <img src="./images/shoe.png" alt="鞋类">
-            </div>
-            <div class="data">
-              <span>退款率</span>
-            </div>
-            <div class="shoeChart" ref="shoeChartRef"></div>
-          </li>
-          <li>
-            <div class="showImg">
-              <img src="./images/clothes.png" alt="服装">
-            </div>
-            <div class="data">
-              <span>投放费比</span>
-            </div>
-            <div class="clothesChart" ref="clothesChartRef"></div>
-          </li>
-          <!-- <li>
-            <div class="showImg">
-              <img src="./images/mz.png" alt="配饰">
-            </div>
-            <div class="data">
-              <span>配饰</span>
-              <span>{{ categoryMetrics.accessories?.count }}</span>
-            </div>
-            <div class="mzChart" ref="mzChartRef"></div>
-          </li> -->
-        </ul>
-      </div>
-      <!-- 柱状图 - 支出金额 -->
-      <div class="barChart" ref="barChartRef"></div>
-      <!-- 折线图 -->
-      <div class="lineChart" ref="lineChartRef"></div>
     </div>
 
     <!-- 底部模块 -->
@@ -447,16 +419,16 @@ const initBarChartHourly = (dom, hourlyData = []) => {
     title: {
       text: '今日支出金额趋势',
       left: 'center',
-      top: 10,
+      top: 6,
       textStyle: {
         color: '#fff',
-        fontSize: 16
+        fontSize: 13
       }
     },
     grid: {
       left: "8%",
-      bottom: "8%",
-      top: "20%",
+      bottom: "6%",
+      top: "14%",
       right: "5%",
       containLabel: true
     },
@@ -580,16 +552,16 @@ const initLineChart = (dom, hourlyData = []) => {
     title: {
       text: '今日用户支付金额趋势',
       left: 'center',
-      top: 10,
+      top: 6,
       textStyle: {
         color: '#fff',
-        fontSize: 16
+        fontSize: 13
       }
     },
     grid: {
       left: "8%",
-      bottom: "8%",
-      top: "20%",
+      bottom: "6%",
+      top: "14%",
       right: "5%",
       containLabel: true
     },
@@ -1064,7 +1036,7 @@ onUnmounted(() => {
 /* Scoped styles based on original CSS */
 .dvd-screen {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
   background: url(./images/53bg.png) no-repeat;
   background-size: 100% 100%;
@@ -1086,7 +1058,7 @@ li {
 }
 
 header {
-  height: 100px;
+  height: 80px;
   width: 100%;
   background-color: transparent;
   background: url(./images/53titlebg.png) no-repeat top center;
@@ -1321,21 +1293,51 @@ header p {
 .main {
   width: 100%;
   flex: 1;
-  padding: 0 2.5%;
+  padding: 0 1%;
   box-sizing: border-box;
-  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  overflow: hidden;
+}
+
+/* 三列结构 */
+.col-left {
+  width: 18%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   min-height: 0;
 }
 
+.col-right {
+  width: 24%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.col-center {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
 .main .top5 {
-  width: 17.5%;
-  height: 70%;
-  float: left;
+  flex: 7;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .main .top5 .top5-title {
   width: 100%;
-  height: 10%;
+  flex-shrink: 0;
   background: url(./images/title.png) no-repeat center;
   background-size: 100%;
   color: #fff;
@@ -1344,8 +1346,8 @@ header p {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-size: 25px;
-  padding: 10px 0;
+  font-size: 18px;
+  padding: 6px 0;
 }
 
 .main .top5 .top5-title > span {
@@ -1383,7 +1385,9 @@ header p {
 
 .main .top5 .top5-content {
   width: 100%;
-  height: 80%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .main .top5 .top5-content ul {
@@ -1402,7 +1406,7 @@ header p {
 .main .top5 .top5-content ul li {
   width: 100%;
   height: 15%;
-  margin-top: 5%;
+  margin-top: 2%;
   position: relative;
 }
 
@@ -1411,8 +1415,8 @@ header p {
   height: 100%;
   margin-left: 5%;
   background: url(./images/border.png) no-repeat center;
-  background-size: contain;
-  font-size: 14px;
+  background-size: 100% 100%;
+  font-size: clamp(11px, 1vw, 14px);
   padding-left: 15%;
   padding-top: 6%;
   color: #fff;
@@ -1438,7 +1442,7 @@ header p {
 /* Initial state for first item, though JS will override */
 .main .top5 .top5-content ul li:nth-of-type(1) .li-content {
   background: url(./images/border2.png) no-repeat center;
-  background-size: contain;
+  background-size: 100% 100%;
 }
 
 .main .top5 .top5-content ul li:nth-of-type(1) .cicle {
@@ -1447,10 +1451,8 @@ header p {
 }
 
 .main .total {
-  width: 65%;
-  height: 100%;
-  float: left;
   position: relative;
+  overflow: hidden;
 }
 
 .main .total .rain {
@@ -1466,8 +1468,8 @@ header p {
 .main .total .data4,
 .main .total .data5,
 .main .total .data6 {
-  width: 160px;
-  height: 80px;
+  width: clamp(90px, 16%, 160px);
+  min-height: 48px;
   position: absolute;
 }
 
@@ -1478,8 +1480,12 @@ header p {
 .main .total .data5 span,
 .main .total .data6 span {
   color: #0ac1c7;
-  font-size: 16px;
+  font-size: clamp(10px, 1.1vw, 14px);
   font-family: '宋体';
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .main .total .data1 p,
@@ -1489,8 +1495,10 @@ header p {
 .main .total .data5 p,
 .main .total .data6 p {
   font-family: 'LCdd';
-  font-size: 28px;
+  font-size: clamp(16px, 1.8vw, 26px);
   color: #f29701;
+  margin: 2px 0 0;
+  white-space: nowrap;
 }
 
 .main .total .data1 {
@@ -1528,10 +1536,10 @@ header p {
 }
 
 .main .total .sphere {
-  width: 400px;
-  height: 400px;
+  width: min(400px, 52%);
+  aspect-ratio: 1;
   position: relative;
-  margin: 14% auto 0;
+  margin: 8% auto 0;
 }
 
 .main .total .sphere .sphere-bg {
@@ -1558,10 +1566,10 @@ header p {
 
 .main .total .sphere .sum span {
   display: block;
-  margin-top: 30%;
-  padding-left: 32%;
+  margin-top: 28%;
+  padding-left: 30%;
   color: #005a79;
-  font-size: 18px;
+  font-size: clamp(12px, 1.2vw, 18px);
 }
 
 .main .total .sphere .sum p {
@@ -1569,12 +1577,12 @@ header p {
   text-align: center;
   color: #003c63;
   font-family: 'LCdd';
-  font-size: 36px;
+  font-size: clamp(20px, 2.5vw, 36px);
 }
 
 .main .total .cicle3 {
-  width: 700px;
-  height: 700px;
+  width: min(700px, 95%);
+  aspect-ratio: 1;
   background: url(./images/circle.png) no-repeat center;
   background-size: 100%;
   position: absolute;
@@ -1586,8 +1594,8 @@ header p {
 }
 
 .main .total .cicle4 {
-  width: 300px;
-  height: 300px;
+  width: min(300px, 42%);
+  aspect-ratio: 1;
   position: absolute;
   top: 60%;
   left: 50%;
@@ -1599,8 +1607,8 @@ header p {
 }
 
 .main .total .cicle5 {
-  width: 300px;
-  height: 300px;
+  width: min(300px, 42%);
+  aspect-ratio: 1;
   position: absolute;
   top: 62%;
   left: 50%;
@@ -1612,8 +1620,8 @@ header p {
 }
 
 .main .total .cicle6 {
-  width: 240px;
-  height: 240px;
+  width: min(240px, 34%);
+  aspect-ratio: 1;
   position: absolute;
   top: 70%;
   left: 50%;
@@ -1625,8 +1633,8 @@ header p {
 }
 
 .main .total .cicle7 {
-  width: 240px;
-  height: 240px;
+  width: min(240px, 34%);
+  aspect-ratio: 1;
   position: absolute;
   top: 72%;
   left: 50%;
@@ -1655,16 +1663,16 @@ header p {
 .main .total .cicle10 span {
   font-family: 'LCdd';
   display: block;
-  margin-left: 25%;
-  font-size: 28px;
-  margin-top: 20%;
+  margin-left: 20%;
+  font-size: clamp(14px, 1.6vw, 26px);
+  margin-top: 18%;
 }
 
 .main .total .cicle8 p,
 .main .total .cicle9 p,
 .main .total .cicle10  p {
   text-align: center;
-  font-size: 14px;
+  font-size: clamp(10px, 0.9vw, 13px);
 }
 
 .main .total .cicle8 {
@@ -1691,20 +1699,22 @@ header p {
 
 
 .main .analyse {
-  width: 17.5%;
-  height: 70%;
-  float: left;
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .main .analyse .analyse-title {
   width: 100%;
-  height: 10%;
+  flex-shrink: 0;
   background: url(./images/title.png) no-repeat center;
   background-size: 100%;
   color: #fff;
   text-align: center;
   display: table;
-  font-size: 25px;
+  font-size: 18px;
+  padding: 6px 0;
 }
 
 .main .analyse .analyse-title span {
@@ -1755,7 +1765,8 @@ header p {
 
 .main .analyse .execution {
   width: 100%;
-  height: 30%;
+  flex: 1;
+  min-height: 0;
   background: url(./images/execution.png) no-repeat;
   background-size: contain;
   overflow: hidden;
@@ -1826,43 +1837,48 @@ header p {
 }
 
 .main .sale {
-  width: 27.5%;
-  height: 30%;
-  position: absolute;
-  bottom: 0;
-  left: 2.5%;
+  flex: 3;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .main .sale ul {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .main .sale ul li {
   width: 100%;
-  height: 30%;
-  margin-top: 1%;
+  flex: 1;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
 }
 
 .main .sale ul li .showImg {
-  float: left;
-  width: 10%;
+  flex-shrink: 0;
+  width: 28px;
   height: 100%;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .main .sale ul li .showImg img {
-  vertical-align: 0%;
-  width: 70%;
-  margin-top: 30%;
+  width: 22px;
+  height: auto;
 }
 
 .main .sale ul li .data {
-  float: left;
-  width: 10%;
+  flex-shrink: 0;
+  width: 52px;
   height: 100%;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .main .sale ul li .data span {
@@ -1877,25 +1893,19 @@ header p {
 .main .sale ul li .shoeChart,
 .main .sale ul li .clothesChart,
 .main .sale ul li .mzChart {
+  flex: 1;
   height: 100%;
-  width: 75%;
-  float: left;
+  min-width: 0;
 }
 
 .main .barChart {
-  width: 27.5%;
-  height: 30%;
-  position: absolute;
-  bottom: 32%;
-  right: 2.5%;
+  flex: 4;
+  min-height: 100px;
 }
 
 .main .lineChart {
-  width: 27.5%;
-  height: 30%;
-  position: absolute;
-  bottom: 0;
-  right: 2.5%;
+  flex: 4;
+  min-height: 100px;
 }
 
 .bottom {
@@ -1930,7 +1940,7 @@ header p {
   font-size: 13px;
 }
 header {
-  height: 100px;
+  height: 80px;
   width: 100%;
   background-color: transparent;
   background: url(./images/53titlebg.png) no-repeat top center;
@@ -1938,22 +1948,22 @@ header {
   text-align: center;
   position: relative;
   flex-shrink: 0;
-  display: flex; /* 新增 */
-  align-items: center; /* 新增：垂直居中 */
-  justify-content: center; /* 新增：水平居中 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .header-title {
   text-align: center;
   position: relative;
   z-index: 5;
-  margin-top: 0; /* 改为 0，原来是 -10px */
+  margin-top: 0;
 }
 
 .header-title h1 {
-  font-size: 52px; /* 增大标题字号 */
-  letter-spacing: 12px;
+  font-size: clamp(28px, 3.5vw, 48px);
+  letter-spacing: 8px;
   font-weight: 900;
-  font-style: italic; /* 字体倾斜 */
+  font-style: italic;
   color: #ffffff;
   text-transform: uppercase;
   background: linear-gradient(180deg, #ffffff 40%, #00f2ff 100%);
@@ -1962,8 +1972,8 @@ header {
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 0 12px rgba(0, 242, 255, 0.6));
   animation: titleGlow 3s ease-in-out infinite;
-  margin: 0 auto; /* 新增：自动左右边距，实现居中 */
-  display: block; /* 新增 */
+  margin: 0 auto;
+  display: block;
 }
 @keyframes rotate {
   0% {

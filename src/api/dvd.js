@@ -180,6 +180,15 @@ export function getDdTrafficTrend(query) {
   })
 }
 
+// 获取账户余额与保证金数据（总金额、可提现金额、保证金余额等）
+export function getDdAccountBalance(query) {
+  return request({
+    url: '/dvd/dd/dashboard/account-balance',
+    method: 'get',
+    params: query
+  })
+}
+
 // 获取商品类目销售占比（商品名称 + 规格，玫瑰图）
 export function getDdCategoryStats(query) {
   return request({

@@ -86,6 +86,21 @@
                     <p><em>{{ overviewMetrics.conversionRate ?? '0.00' }}</em><i>%</i></p>
                   </div>
                 </li>
+
+                <li>
+                  <div class="icon"><img src="./images/iconf.png"></div>
+                  <div>
+                    <span>保证金</span>
+                    <p><em>{{ fmtNum(accountBalance.marginAmount, 2) }}</em><i>元</i></p>
+                  </div>
+                </li>
+                <li>
+                  <div class="icon"><img src="./images/iconf.png"></div>
+                  <div>
+                    <span>总金额</span>
+                    <p><em>{{ fmtNum(accountBalance.balance, 2) }}</em><i>元</i></p>
+                  </div>
+                </li>
               </ul>
             </div>
           </div>
@@ -93,11 +108,9 @@
             <div class="tit"><span>类目销售占比</span><p></p></div>
             <div class="rose-charts-wrap">
               <div class="rose-item">
-                <div class="rose-sub-title">商品名称</div>
                 <div id="roseChart1" class="rose-chart-dom"></div>
               </div>
               <div class="rose-item">
-                <div class="rose-sub-title">商品规格</div>
                 <div id="roseChart2" class="rose-chart-dom"></div>
               </div>
             </div>
@@ -178,7 +191,7 @@
 import { onMounted, onUnmounted, ref } from 'vue';
 import mapJson from './js/china.json';
 import * as echarts from 'echarts';
-import { getDdGeoOrderStats, getDdStoreList, getDdDailyOrderList, getDdDailyOverviewMetrics, getDdCategoryStats, getDdTrafficTrend } from '@/api/dvd';
+import { getDdGeoOrderStats, getDdStoreList, getDdDailyOrderList, getDdDailyOverviewMetrics, getDdCategoryStats, getDdTrafficTrend, getDdAccountBalance } from '@/api/dvd';
 let timer = null;
 let charts = [];
 
@@ -201,7 +214,15 @@ const toggleMapMode = () => {
 
 // ==================== 筛选条件 ====================
 // 日期范围：[startDate, endDate]，格式 'YYYY-MM-DD'
-const selectedDateRange = ref(null);
+const initDate = () => {
+  const dt = new Date();
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const d = String(dt.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+const todayStr = initDate();
+const selectedDateRange = ref([todayStr, todayStr]);
 // 当前选中的店铺 ID
 const selectedStore = ref(null);
 // 店铺列表
@@ -226,6 +247,7 @@ const handleFilterChange = () => {
   init(100000);
   loadOrderList(true);
   loadOverviewMetrics();
+  loadAccountBalance();
   loadCategoryStats();
   loadTrafficTrend();
 };
@@ -246,12 +268,12 @@ const loadOverviewMetrics = async () => {
     if (selectedDateRange.value && selectedDateRange.value.length === 2) {
       startDate = selectedDateRange.value[0];
       endDate = selectedDateRange.value[1];
-    } else {
-      const today = formatDate(new Date());
-      startDate = today;
-      endDate = today;
     }
-    const params = { start_date: startDate, end_date: endDate };
+    const params = {};
+    if (startDate && endDate) {
+      params.start_date = startDate;
+      params.end_date = endDate;
+    }
     if (selectedStore.value) params.store_id = selectedStore.value;
 
     const res = await getDdDailyOverviewMetrics(params);
@@ -265,6 +287,22 @@ const loadOverviewMetrics = async () => {
     }
   } catch (e) {
     console.warn('加载概览指标失败', e);
+  }
+};
+
+// ==================== 账户余额与保证金 ====================
+const accountBalance = ref({});
+
+const loadAccountBalance = async () => {
+  try {
+    const params = {};
+    if (selectedStore.value) params.store_id = selectedStore.value;
+    const res = await getDdAccountBalance(params);
+    if (res && res.data) {
+      accountBalance.value = res.data;
+    }
+  } catch (e) {
+    console.warn('加载账户余额与保证金失败', e);
   }
 };
 
@@ -397,15 +435,12 @@ const loadTrafficTrend = async () => {
     if (selectedDateRange.value && selectedDateRange.value.length === 2) {
       startDate = selectedDateRange.value[0];
       endDate   = selectedDateRange.value[1];
-    } else {
-      // 未选日期时默认展示最近 30 天
-      const today = new Date();
-      const past  = new Date(today);
-      past.setDate(today.getDate() - 29);
-      startDate = formatDate(past);
-      endDate   = formatDate(today);
     }
-    const params = { start_date: startDate, end_date: endDate };
+    const params = {};
+    if (startDate && endDate) {
+      params.start_date = startDate;
+      params.end_date = endDate;
+    }
     if (selectedStore.value) params.store_id = selectedStore.value;
 
     const res = await getDdTrafficTrend(params);
@@ -439,6 +474,12 @@ const initRoseChart1 = (data) => {
   const option = {
     backgroundColor: 'transparent',
     color: ROSE_COLORS,
+    title: {
+      text: '商品名称',
+      left: 'center',
+      top: 4,
+      textStyle: { color: '#7ec4ff', fontSize: 12, fontWeight: 'normal' }
+    },
     tooltip: {
       trigger: 'item',
       formatter: '{b}<br/>订单数：{c} ({d}%)',
@@ -449,7 +490,7 @@ const initRoseChart1 = (data) => {
     legend: {
       type: 'scroll',
       orient: 'horizontal',
-      bottom: 0,
+      bottom: 4,
       itemWidth: 10,
       itemHeight: 10,
       textStyle: { color: '#b3d4f5', fontSize: 10 },
@@ -460,8 +501,8 @@ const initRoseChart1 = (data) => {
     series: [{
       name: '商品名称',
       type: 'pie',
-      radius: ['20%', '60%'],
-      center: ['50%', '42%'],
+      radius: ['20%', '56%'],
+      center: ['50%', '50%'],
       roseType: 'area',
       itemStyle: {
         borderRadius: 4,
@@ -495,6 +536,12 @@ const initRoseChart2 = (data) => {
   const option = {
     backgroundColor: 'transparent',
     color: ROSE_COLORS,
+    title: {
+      text: '商品规格',
+      left: 'center',
+      top: 4,
+      textStyle: { color: '#7ec4ff', fontSize: 12, fontWeight: 'normal' }
+    },
     tooltip: {
       trigger: 'item',
       formatter: '{b}<br/>订单数：{c} ({d}%)',
@@ -505,7 +552,7 @@ const initRoseChart2 = (data) => {
     legend: {
       type: 'scroll',
       orient: 'horizontal',
-      bottom: 0,
+      bottom: 4,
       itemWidth: 10,
       itemHeight: 10,
       textStyle: { color: '#b3d4f5', fontSize: 10 },
@@ -516,8 +563,8 @@ const initRoseChart2 = (data) => {
     series: [{
       name: '商品规格',
       type: 'pie',
-      radius: ['20%', '60%'],
-      center: ['50%', '42%'],
+      radius: ['20%', '56%'],
+      center: ['50%', '50%'],
       roseType: 'area',
       itemStyle: {
         borderRadius: 4,
@@ -1481,6 +1528,7 @@ onMounted(() => {
   init(100000);
   loadOrderList(true);
   loadOverviewMetrics();
+  loadAccountBalance();
   loadCategoryStats();
   loadTrafficTrend();
   window.addEventListener("resize", resizeCharts);
@@ -1770,7 +1818,7 @@ onUnmounted(() => {
 }
 
 .overview-box .drqk li {
-  height: 33.33%;
+  height: 25%;
   width: 50%;
   float: none;
   display: flex;
@@ -1815,35 +1863,34 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  margin-top: 8px;
+  overflow: hidden;
 }
 
 .rose-charts-wrap {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   flex: 1;
   gap: 10px;
   padding: 4px 6px 8px;
   min-height: 0;
+  overflow: hidden;
 }
 
 .rose-item {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
-.rose-sub-title {
-  text-align: center;
-  font-size: 12px;
-  color: #7ec4ff;
-  margin-bottom: 2px;
-  letter-spacing: 1px;
-}
 
 .rose-chart-dom {
   flex: 1;
-  min-height: 0; /* 移除固定最小高度 */
+  min-height: 0;
+  width: 100%;
 }
 
 /* 右侧订单列：纵向 flex，撑满 nav1 高度（即 mainbox 高度） */
