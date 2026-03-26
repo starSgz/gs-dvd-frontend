@@ -1,34 +1,34 @@
 <template>
   <el-drawer v-model="showSettings" :withHeader="false" :lock-scroll="false" direction="rtl" size="300px">
     <div class="setting-drawer-title">
-      <h3 class="drawer-title">菜单导航设置</h3>
+      <h3 class="drawer-title">&#33756;&#21333;&#23548;&#33322;&#35774;&#32622;</h3>
     </div>
     <div class="nav-wrap">
-      <el-tooltip content="左侧菜单" placement="bottom">
+      <el-tooltip content="&#24038;&#20391;&#33756;&#21333;" placement="bottom">
         <div class="item left" @click="handleNavType(1)" :class="{ activeItem: navType == 1 }">
           <b></b><b></b>
         </div>
       </el-tooltip>
 
-      <el-tooltip content="混合菜单" placement="bottom">
+      <el-tooltip content="&#28151;&#21512;&#33756;&#21333;" placement="bottom">
         <div class="item mix" @click="handleNavType(2)" :class="{ activeItem: navType == 2 }">
           <b></b><b></b>
         </div>
       </el-tooltip>
-      <el-tooltip content="顶部菜单" placement="bottom">
+      <el-tooltip content="&#39030;&#37096;&#33756;&#21333;" placement="bottom">
         <div class="item top" @click="handleNavType(3)" :class="{ activeItem: navType == 3 }">
           <b></b><b></b>
         </div>
       </el-tooltip>
     </div>
     <div class="setting-drawer-title">
-      <h3 class="drawer-title">主题风格设置</h3>
+      <h3 class="drawer-title">&#20027;&#39064;&#39118;&#26684;&#35774;&#32622;</h3>
     </div>
     <div class="setting-drawer-block-checbox">
       <div class="setting-drawer-block-checbox-item" @click="handleTheme('theme-dark')">
         <img src="@/assets/images/dark.svg" alt="dark" />
         <div v-if="sideTheme === 'theme-dark'" class="setting-drawer-block-checbox-selectIcon" style="display: block;">
-          <i aria-label="图标: check" class="anticon anticon-check">
+          <i aria-label="icon: check" class="anticon anticon-check">
             <svg viewBox="64 64 896 896" data-icon="check" width="1em" height="1em" :fill="theme" aria-hidden="true" focusable="false" class>
               <path d="M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 0 0-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z" />
             </svg>
@@ -38,7 +38,7 @@
       <div class="setting-drawer-block-checbox-item" @click="handleTheme('theme-light')">
         <img src="@/assets/images/light.svg" alt="light" />
         <div v-if="sideTheme === 'theme-light'" class="setting-drawer-block-checbox-selectIcon" style="display: block;">
-          <i aria-label="图标: check" class="anticon anticon-check">
+          <i aria-label="icon: check" class="anticon anticon-check">
             <svg viewBox="64 64 896 896" data-icon="check" width="1em" height="1em" :fill="theme" aria-hidden="true" focusable="false" class>
               <path d="M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 0 0-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z" />
             </svg>
@@ -47,52 +47,63 @@
       </div>
     </div>
     <div class="drawer-item">
-      <span>主题颜色</span>
+      <span>&#20027;&#39064;&#39068;&#33394;</span>
       <span class="comp-style">
         <el-color-picker v-model="theme" :predefine="predefineColors" @change="themeChange"/>
       </span>
     </div>
     <el-divider />
 
-    <h3 class="drawer-title">系统布局配置</h3>
+    <h3 class="drawer-title">&#31995;&#32479;&#24067;&#23616;&#37197;&#32622;</h3>
 
     <div class="drawer-item">
-      <span>开启 Tags-Views</span>
+      <span>&#24320;&#21551; Tags-Views</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.tagsView" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>显示页签图标</span>
+      <span>&#24067;&#23616;&#22823;&#23567;</span>
+      <span class="comp-style drawer-select">
+        <el-select v-model="layoutSize" size="small" style="width: 110px" @change="handleLayoutSizeChange">
+          <el-option label="&#36739;&#22823;" value="large" />
+          <el-option label="&#40664;&#35748;" value="default" />
+          <el-option label="&#31245;&#23567;" value="small" />
+        </el-select>
+      </span>
+    </div>
+
+    <div class="drawer-item">
+      <span>&#26174;&#31034;&#39029;&#31614;&#22270;&#26631;</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.tagsIcon" :disabled="!settingsStore.tagsView" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>固定 Header</span>
+      <span>&#22266;&#23450; Header</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.fixedHeader" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>显示 Logo</span>
+      <span>&#26174;&#31034; Logo</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.sidebarLogo" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>动态标题</span>
+      <span>&#21160;&#24577;&#26631;&#39064;</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.dynamicTitle" @change="dynamicTitleChange" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>底部版权</span>
+      <span>&#24213;&#37096;&#29256;&#26435;</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.footerVisible" class="drawer-switch" />
       </span>
@@ -100,8 +111,8 @@
 
     <el-divider />
 
-    <el-button type="primary" plain icon="DocumentAdd" @click="saveSetting">保存配置</el-button>
-    <el-button plain icon="Refresh" @click="resetSetting">重置配置</el-button>
+    <el-button type="primary" plain icon="DocumentAdd" @click="saveSetting">&#20445;&#23384;&#37197;&#32622;</el-button>
+    <el-button plain icon="Refresh" @click="resetSetting">&#37325;&#32622;&#37197;&#32622;</el-button>
   </el-drawer>
 
 </template>
@@ -120,10 +131,10 @@ const showSettings = ref(false);
 const navType = ref(settingsStore.navType)
 const theme = ref(settingsStore.theme);
 const sideTheme = ref(settingsStore.sideTheme);
+const layoutSize = ref(appStore.size)
 const storeSettings = computed(() => settingsStore);
 const predefineColors = ref(["#409EFF", "#ff4500", "#ff8c00", "#ffd700", "#90ee90", "#00ced1", "#1e90ff", "#c71585"]);
 
-/** 是否需要dynamicTitle */
 function dynamicTitleChange() {
   useSettingsStore().setTitle(useSettingsStore().title)
 }
@@ -143,7 +154,14 @@ function handleNavType(val) {
   navType.value = val
 }
 
-/** 菜单导航设置 */
+function handleLayoutSizeChange(size) {
+  proxy.$modal.loading('\u6b63\u5728\u8bbe\u7f6e\u5e03\u5c40\u5927\u5c0f\uff0c\u8bf7\u7a0d\u5019...')
+  appStore.setSize(size)
+  setTimeout(() => {
+    window.location.reload()
+  }, 1000)
+}
+
 watch(() => navType, val => {
   if (val.value == 1) {
     appStore.sidebar.opened = true
@@ -157,13 +175,13 @@ watch(() => navType, val => {
     appStore.toggleSideBarHide(true)
   }
   if ([1, 3].includes(val.value)) {
-      permissionStore.setSidebarRouters(permissionStore.defaultRoutes)
+    permissionStore.setSidebarRouters(permissionStore.defaultRoutes)
   }
   }, { immediate: true, deep: true }
 )
 
 function saveSetting() {
-  proxy.$modal.loading("正在保存到本地，请稍候...");
+  proxy.$modal.loading('\u6b63\u5728\u4fdd\u5b58\u5230\u672c\u5730\uff0c\u8bf7\u7a0d\u5019...');
   let layoutSetting = {
     "navType": storeSettings.value.navType,
     "tagsView": storeSettings.value.tagsView,
@@ -180,12 +198,13 @@ function saveSetting() {
 }
 
 function resetSetting() {
-  proxy.$modal.loading("正在清除设置缓存并刷新，请稍候...");
+  proxy.$modal.loading('\u6b63\u5728\u6e05\u9664\u8bbe\u7f6e\u7f13\u5b58\u5e76\u5237\u65b0\uff0c\u8bf7\u7a0d\u5019...');
   localStorage.removeItem("layout-setting")
   setTimeout("window.location.reload()", 1000)
 }
 
 function openSetting() {
+  layoutSize.value = appStore.size
   showSettings.value = true;
 }
 
@@ -250,7 +269,6 @@ defineExpose({
   }
 }
 
-// 导航模式
 .nav-wrap {
   display: flex;
   justify-content: flex-start;

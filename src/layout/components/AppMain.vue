@@ -42,6 +42,9 @@ function addIframe() {
   width: 100%;
   position: relative;
   overflow: hidden;
+  background: #faf9f5;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
 .fixed-header + .app-main {
@@ -49,6 +52,7 @@ function addIframe() {
   scrollbar-gutter: auto;
   height: calc(100vh - 50px);
   min-height: 0px;
+  padding-top: 20px;
 }
 
 .app-main:has(.copyright) {
@@ -72,7 +76,7 @@ function addIframe() {
   }
 }
 
-/* 移动端fixed-header优化 */
+/* 绉诲姩绔痜ixed-header浼樺寲 */
 @media screen and (max-width: 991px) {
   .fixed-header + .app-main {
     padding-bottom: max(60px, calc(constant(safe-area-inset-bottom) + 40px));

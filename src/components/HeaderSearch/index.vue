@@ -14,7 +14,7 @@
         size="large"
         @input="querySearch"
         prefix-icon="Search"
-        placeholder="菜单搜索，支持标题、URL模糊查询"
+        placeholder="鑿滃崟鎼滅储锛屾敮鎸佹爣棰樸€乁RL妯＄硦鏌ヨ"
         clearable
         @keyup.enter="selectActiveResult"
         @keydown.up.prevent="navigateResult('up')"
@@ -82,7 +82,7 @@ function change(val) {
   const path = val.path
   const query = val.query
   if (isHttp(path)) {
-    // http(s):// 路径新窗口打开
+    // http(s):// 璺緞鏂扮獥鍙ｆ墦寮€
     const pindex = path.indexOf("http")
     window.open(path.substr(pindex, path.length), "_blank")
   } else {
@@ -193,6 +193,11 @@ onMounted(() => {
 
 watch(searchPool, (list) => {
   initFuse(list)
+})
+
+defineExpose({
+  click,
+  close
 })
 </script>
 

@@ -82,6 +82,7 @@ function setLayout() {
 .main-container:has(.fixed-header) {
   height: 100vh;
   overflow: hidden;
+  background: #faf9f5;
 }
 
 .drawer-bg {

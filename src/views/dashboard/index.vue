@@ -1,5 +1,5 @@
 <template>
-  <div :key="userStore.accessKey || 'dashboard-root'">
+  <div :key="userStore.accessKey || 'dashboard-root'" class="dashboardPage">
     <div class="pageHeaderContent">
       <div class="avatar">
         <el-avatar :size="72" :src="currentUser.avatar" />
@@ -32,7 +32,7 @@
     </div>
 
     <!-- 卡密激活提示卡片 -->
-    <div v-if="!isActivated" key="not-activated" style="padding: 10px">
+    <div v-if="!isActivated" key="not-activated" class="dashboardMainContent">
       <el-card 
         style="margin-bottom: 24px"
         shadow="always"
@@ -62,9 +62,9 @@
     </div>
 
     <!-- 主内容区域 - 仅激活用户或 admin 可见 -->
-    <div v-if="isActivated" key="activated" style="padding: 10px">
-      <el-row :gutter="24">
-        <el-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24">
+    <div v-if="isActivated" key="activated" class="dashboardMainContent">
+      <el-row :gutter="24" class="dashboardContentRow">
+        <el-col :xl="14" :lg="14" :md="24" :sm="24" :xs="24" class="dashboardStretchCol">
           <el-card
             class="projectList"
             style="margin-bottom: 24px"
@@ -77,6 +77,7 @@
                 <el-link type="primary" :underline="false" href="">全部项目</el-link>
               </div>
             </template>
+            <div class="projectListBody">
             <el-row>
               <el-col
                 v-for="item in projectNotice"
@@ -97,8 +98,11 @@
                 </div>
               </el-col>
             </el-row>
+            </div>
           </el-card>
+        </el-col>
 
+        <el-col :xl="10" :lg="10" :md="24" :sm="24" :xs="24" class="dashboardStretchCol">
           <el-card
             class="activeCard"
             shadow="never"
@@ -142,7 +146,7 @@
           </el-card>
         </el-col>
 
-        <el-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
+        <!-- <el-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
           <el-card
             style="margin-bottom: 24px"
             shadow="never"
@@ -176,7 +180,7 @@
               </el-row>
             </div>
           </el-card>
-        </el-col>
+        </el-col> -->
       </el-row>
     </div>
   </div>
@@ -494,9 +498,18 @@ onMounted(async () => {
   align-items: center;
 }
 
+.dashboardPage {
+  height: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .activitiesList {
   padding: 0 24px 8px 24px;
-  max-height: 500px;
+  max-height: none;
+  height: 100%;
+  max-height: 760px;
   overflow-y: auto;
   
   &::-webkit-scrollbar {
@@ -532,7 +545,7 @@ onMounted(async () => {
           font-weight: 500;
         }
         .notice-title {
-          color: #1890ff;
+          color: var(--current-color);
           cursor: pointer;
           &:hover {
             text-decoration: underline;
@@ -554,12 +567,17 @@ onMounted(async () => {
 
 .pageHeaderContent {
   display: flex;
-  padding: 12px;
+  align-items: center;
+  padding: 20px 24px;
   margin-bottom: 24px;
   background: #fff;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
   .avatar {
     flex: 0 1 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     & > span {
       display: block;
       width: 72px;
@@ -568,38 +586,69 @@ onMounted(async () => {
     }
   }
   .content {
-    position: relative;
-    top: 4px;
     flex: 1 1 auto;
-    margin-left: 24px;
+    margin-left: 18px;
+    padding: 0 12px 0 0;
     color: rgba(0, 0, 0, 0.45);
     line-height: 22px;
+    text-align: left;
     .contentTitle {
-      margin-bottom: 12px;
+      margin-bottom: 0;
       color: rgba(0, 0, 0, 0.85);
-      font-weight: 500;
-      font-size: 20px;
-      line-height: 28px;
+      font-weight: 600;
+      font-size: 18px;
+      line-height: 30px;
+      letter-spacing: 0.02em;
     }
   }
 }
 
+.dashboardMainContent {
+  height: 100%;
+  padding: 0;
+  padding-bottom: clamp(8px, 1vh, 16px);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.dashboardContentRow {
+  flex: 1;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.dashboardStretchCol {
+  display: flex;
+  min-height: 0;
+}
+
 .extraContent {
-  .clearfix();
-  float: right;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
   white-space: nowrap;
+  gap: 4px;
   .statItem {
     position: relative;
-    display: inline-block;
-    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 132px;
+    padding: 0 24px;
+    text-align: center;
     &::after {
       position: absolute;
-      top: 8px;
+      top: 50%;
       right: 0;
       width: 1px;
-      height: 40px;
-      background-color: #e8e8e8;
+      height: 36px;
+      background-color: #ebe5d8;
       content: "";
+      transform: translateY(-50%);
     }
     &:last-child {
       padding-right: 0;
@@ -631,7 +680,25 @@ onMounted(async () => {
 }
 
 .projectList {
+  width: 100%;
+  height: 100%;
+
+  .projectListBody {
+    max-height: 760px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.18);
+      border-radius: 3px;
+    }
+  }
+
   .projectGrid {
+    display: flex;
     padding: 24px;
     border: 1px solid #f0f0f0;
     margin: -1px 0 0 -1px;
@@ -642,6 +709,8 @@ onMounted(async () => {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
     .project-item {
+      width: 100%;
+      min-height: 104px;
       .cardTitle {
         display: flex;
         align-items: center;
@@ -682,6 +751,18 @@ onMounted(async () => {
   }
 }
 
+.activeCard {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.activeCard :deep(.el-card__body) {
+  flex: 1;
+  min-height: 0;
+}
+
 .datetime {
   color: rgba(0, 0, 0, 0.25);
 }
@@ -702,6 +783,22 @@ onMounted(async () => {
 }
 
 @media screen and (max-width: 992px) {
+  .dashboardPage {
+    min-height: auto;
+  }
+
+  .dashboardMainContent,
+  .dashboardContentRow,
+  .dashboardStretchCol,
+  .projectList,
+  .activeCard,
+  .activitiesList,
+  .projectList .projectListBody {
+    height: auto;
+    max-height: none;
+    min-height: auto;
+  }
+
   .activeCard {
     margin-bottom: 24px;
   }
@@ -709,11 +806,10 @@ onMounted(async () => {
     margin-bottom: 0;
   }
   .extraContent {
-    float: none;
-    margin-right: 0;
+    margin-top: 18px;
+    width: 100%;
     .statItem {
       padding: 0 16px;
-      text-align: left;
       &::after {
         display: none;
       }
@@ -730,13 +826,22 @@ onMounted(async () => {
 @media screen and (max-width: 576px) {
   .pageHeaderContent {
     display: block;
+    padding: 18px;
+    .avatar {
+      margin-bottom: 14px;
+    }
     .content {
       margin-left: 0;
+      padding: 0;
     }
   }
   .extraContent {
+    display: block;
+    margin-top: 16px;
     .statItem {
-      float: none;
+      width: 100%;
+      min-width: 0;
+      padding: 10px 0;
     }
   }
 }
