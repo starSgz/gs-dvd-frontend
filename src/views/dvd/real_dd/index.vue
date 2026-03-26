@@ -17,7 +17,7 @@
         </div>
         <span class="control-item">CNY</span>
         <div class="screenfull-wrapper">
-          <screenfull />
+          <screenfull @change="setImmersiveMode" />
         </div>
       </div>
     </header>
@@ -195,6 +195,7 @@ const clothesChartRef = ref(null);
 const mzChartRef = ref(null);
 const barChartRef = ref(null);
 const lineChartRef = ref(null);
+const isImmersiveMode = ref(false);
 
 // State for cleanup
 let intervalId = null;
@@ -203,6 +204,16 @@ let rainAnimId = null;
 let resizeObserver = null;
 let resizeTimeout = null;
 const charts = [];
+
+const setImmersiveMode = (enabled) => {
+  isImmersiveMode.value = enabled;
+  document.body.classList.toggle('realdd-immersive-mode', enabled);
+};
+
+const handleDoubleClick = () => {
+  const nextMode = !isImmersiveMode.value;
+  setImmersiveMode(nextMode);
+};
 
 // 响应式数据
 const selectedStore = ref(null);
@@ -999,6 +1010,7 @@ const updateAllCharts = () => {
 
 onMounted(async () => {
   window.addEventListener('resize', handleResize);
+  document.addEventListener('dblclick', handleDoubleClick);
   initResizeObserver();
   
   // 加载店铺列表和数据
@@ -1017,6 +1029,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
+  document.removeEventListener('dblclick', handleDoubleClick);
+  setImmersiveMode(false);
   
   if (resizeTimeout) clearTimeout(resizeTimeout);
   if (resizeObserver) {
@@ -2069,5 +2083,28 @@ header {
     transform: matrix3d(0.57257, 0, 0, 0, 0, 0.57257, 0, 0, 0, 0, 1, 0, 50.59331, -98.2287, 0, 1);
     z-index: 99.01771;
   }
+}
+</style>
+<style>
+body.realdd-immersive-mode .sidebar-container,
+body.realdd-immersive-mode .fixed-header,
+body.realdd-immersive-mode .copyright {
+  display: none !important;
+}
+
+body.realdd-immersive-mode .main-container {
+  margin-left: 0 !important;
+}
+
+body.realdd-immersive-mode .app-main,
+body.realdd-immersive-mode .fixed-header + .app-main {
+  margin-top: 0 !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  padding: 0 !important;
+}
+
+body.realdd-immersive-mode .dvd-screen {
+  height: 100vh !important;
 }
 </style>

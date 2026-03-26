@@ -38,7 +38,7 @@
         </div>
         <span class="control-item">CNY</span>
         <div class="screenfull-wrapper">
-          <screenfull />
+          <screenfull @change="setImmersiveMode" />
         </div>
       </div>
     </div>
@@ -292,7 +292,6 @@ import * as echarts from 'echarts'
 import { markRaw } from 'vue'
 import { getAllDashboardData, getStoreList, getRealtimeMetrics, getRealtimeTrend, getTopStores, getRealtimeOrders, getSkuSalesData } from '@/api/dvd'
 import Screenfull from '@/components/Screenfull'
-import { useFullscreen } from '@vueuse/core'
 
 export default {
   name: 'DvdQfDashboard',
@@ -305,9 +304,6 @@ export default {
     this.chartGmvInstance = null
     this.chartOrdersInstance = null
     this.chartPlatformInstance = null
-    // 全屏控制实例
-    const { toggle } = useFullscreen()
-    this.toggleFullscreen = toggle
   },
   data() {
     return {
@@ -329,6 +325,7 @@ export default {
       channelTab: 'sales',
       skuSalesData: [],
       refreshTimer: null,
+      isImmersiveMode: false,
       resizeObserver: null, // ResizeObserver 实例
       resizeTimeout: null, // 防抖定时器
     }
@@ -406,6 +403,7 @@ export default {
     // 移除双击事件监听器
     document.removeEventListener('dblclick', this.handleDoubleClick)
     window.removeEventListener('resize', this.handleResize)
+    this.setImmersiveMode(false)
     const instances = ['chartGmvInstance', 'chartOrdersInstance', 'chartPlatformInstance']
     instances.forEach(name => {
       if (this[name]) {
@@ -417,9 +415,12 @@ export default {
   methods: {
     handleDoubleClick() {
       // 双击任意位置切换全屏
-      if (this.toggleFullscreen) {
-        this.toggleFullscreen()
-      }
+      const nextMode = !this.isImmersiveMode
+      this.setImmersiveMode(nextMode)
+    },
+    setImmersiveMode(enabled) {
+      this.isImmersiveMode = enabled
+      document.body.classList.toggle('qf-immersive-mode', enabled)
     },
     updateTime() {
       const now = new Date()
@@ -1923,5 +1924,26 @@ export default {
 </style>
 
 <style>
+body.qf-immersive-mode .sidebar-container,
+body.qf-immersive-mode .fixed-header,
+body.qf-immersive-mode .copyright {
+  display: none !important;
+}
+
+body.qf-immersive-mode .main-container {
+  margin-left: 0 !important;
+}
+
+body.qf-immersive-mode .app-main,
+body.qf-immersive-mode .fixed-header + .app-main {
+  margin-top: 0 !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  padding: 0 !important;
+}
+
+body.qf-immersive-mode .dashboard-container {
+  height: 100vh !important;
+}
 
 </style>

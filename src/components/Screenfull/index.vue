@@ -1,13 +1,24 @@
 <template>
   <div>
-    <svg-icon :icon-class="isFullscreen ? 'exit-fullscreen' : 'fullscreen'" @click="toggle" />
+    <svg-icon :icon-class="isFullscreen ? 'exit-fullscreen' : 'fullscreen'" @click="handleToggle" />
   </div>
 </template>
 
 <script setup>
+import { watch } from 'vue'
 import { useFullscreen } from '@vueuse/core'
 
-const { isFullscreen, enter, exit, toggle } = useFullscreen();
+const emit = defineEmits(['change'])
+
+const { isFullscreen, toggle } = useFullscreen()
+
+watch(isFullscreen, value => {
+  emit('change', value)
+})
+
+const handleToggle = async () => {
+  await toggle()
+}
 </script>
 
 <style lang='scss' scoped>

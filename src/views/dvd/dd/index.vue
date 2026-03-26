@@ -35,6 +35,9 @@
             />
           </el-select>
         </div>
+        <div class="screenfull-wrapper">
+          <screenfull @change="setImmersiveMode" />
+        </div>
       </div>
     </div>
     <div class="mainbox">
@@ -192,8 +195,20 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import mapJson from './js/china.json';
 import * as echarts from 'echarts';
 import { getDdGeoOrderStats, getDdStoreList, getDdDailyOrderList, getDdDailyOverviewMetrics, getDdCategoryStats, getDdTrafficTrend, getDdAccountBalance } from '@/api/dvd';
+import Screenfull from '@/components/Screenfull';
 let timer = null;
 let charts = [];
+const isImmersiveMode = ref(false);
+
+const setImmersiveMode = (enabled) => {
+  isImmersiveMode.value = enabled;
+  document.body.classList.toggle('dd-immersive-mode', enabled);
+};
+
+const handleDoubleClick = () => {
+  const nextMode = !isImmersiveMode.value;
+  setImmersiveMode(nextMode);
+};
 
 // 地图下钻状态
 // let parentInfo = [{ cityName: '全国', code: 100000 }];
@@ -1532,11 +1547,14 @@ onMounted(() => {
   loadCategoryStats();
   loadTrafficTrend();
   window.addEventListener("resize", resizeCharts);
+  document.addEventListener('dblclick', handleDoubleClick);
 });
 
 onUnmounted(() => {
   if (timer) clearTimeout(timer);
   window.removeEventListener("resize", resizeCharts);
+  document.removeEventListener('dblclick', handleDoubleClick);
+  setImmersiveMode(false);
   charts.forEach(chart => chart.dispose());
   charts = [];
   if (mapChart) {
@@ -2467,5 +2485,61 @@ onUnmounted(() => {
 
 .toggle-btn:hover {
   background: rgba(0, 100, 180, 0.8);
+}
+
+.screenfull-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-radius: 3px;
+  background: rgba(0, 194, 194, 0.1);
+  border: 1px solid rgba(0, 194, 194, 0.3);
+}
+
+.screenfull-wrapper:hover {
+  background: rgba(0, 194, 194, 0.2);
+  border-color: rgba(0, 194, 194, 0.6);
+  box-shadow: 0 0 8px rgba(0, 194, 194, 0.3);
+}
+
+.screenfull-wrapper :deep(svg) {
+  fill: #00c2c2 !important;
+  color: #00c2c2 !important;
+  width: 16px;
+  height: 16px;
+  transition: all 0.3s;
+}
+
+.screenfull-wrapper:hover :deep(svg) {
+  fill: #00e5e5 !important;
+  color: #00e5e5 !important;
+  transform: scale(1.05);
+}
+</style>
+<style>
+body.dd-immersive-mode .sidebar-container,
+body.dd-immersive-mode .fixed-header,
+body.dd-immersive-mode .copyright {
+  display: none !important;
+}
+
+body.dd-immersive-mode .main-container {
+  margin-left: 0 !important;
+}
+
+body.dd-immersive-mode .app-main,
+body.dd-immersive-mode .fixed-header + .app-main {
+  margin-top: 0 !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  padding: 0 !important;
+}
+
+body.dd-immersive-mode .dvd-wrapper {
+  height: 100vh !important;
 }
 </style>
