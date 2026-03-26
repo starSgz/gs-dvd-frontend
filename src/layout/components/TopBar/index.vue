@@ -58,6 +58,11 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
+.topbar-menu.el-menu--horizontal {
+  background: var(--navbar-bg, #FBF9F5) !important;
+  border-bottom: none !important;
+}
+
 /* menu item */
 .topbar-menu.el-menu--horizontal .el-submenu__title, .topbar-menu.el-menu--horizontal .el-menu-item {
   padding: 0 10px !important;
@@ -82,6 +87,7 @@ onMounted(() => {
   line-height: 50px !important;
   color: #303133 !important;
   margin: 0 15px -3px!important;
+  background: transparent !important;
 }
 
 /* topbar more arrow */
@@ -95,5 +101,29 @@ onMounted(() => {
 /* menu__title el-menu-item */
 .topbar-menu.el-menu--horizontal .el-sub-menu__title, .topbar-menu.el-menu--horizontal .el-menu-item {
   height: 60px;
+}
+
+.topbar-menu.el-menu--horizontal > .el-menu-item:hover,
+.topbar-menu.el-menu--horizontal > .el-sub-menu .el-sub-menu__title:hover {
+  background: #F6F1E8 !important;
+}
+
+.topbar-menu.el-menu--horizontal > .el-menu-item.is-active,
+.topbar-menu.el-menu--horizontal > .el-sub-menu.is-active .el-submenu__title {
+  background: #F8F4EC !important;
+}
+
+.el-menu--popup {
+  background: #FBF9F5 !important;
+}
+
+.el-menu--popup .el-menu-item,
+.el-menu--popup .el-sub-menu__title {
+  background: #FBF9F5 !important;
+}
+
+.el-menu--popup .el-menu-item:hover,
+.el-menu--popup .el-sub-menu__title:hover {
+  background: #F6F1E8 !important;
 }
 </style>

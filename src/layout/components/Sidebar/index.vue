@@ -48,6 +48,9 @@ const getMenuBackground = computed(() => {
   if (settingsStore.isDark) {
     return 'var(--sidebar-bg)';
   }
+  if (settingsStore.navType == 3) {
+    return '#FBF9F5';
+  }
   return sideTheme.value === 'theme-dark' ? variables.menuBg : variables.menuLightBg;
 });
 
@@ -77,6 +80,7 @@ const activeMenu = computed(() => {
   }
 
   .el-menu {
+    background-color: v-bind(getMenuBackground);
     border: none;
     height: 100%;
     width: 100% !important;

@@ -7,7 +7,7 @@
     <breadcrumb v-if="settingsStore.navType == 1" id="breadcrumb-container" class="breadcrumb-container" />
     <top-nav v-if="settingsStore.navType == 2" id="topmenu-container" class="topmenu-container" />
 
-    <template v-if="settingsStore.navType == 3">c:\Users\Administrator\Desktop\oc-frontend\src\assets\icons\svg\refresh.svgc:\Users\Administrator\Desktop\oc-frontend\src\assets\icons\svg\refresh.svg
+    <template v-if="settingsStore.navType == 3">
       <logo v-show="settingsStore.sidebarLogo" :collapse="false" />
       <top-bar id="topbar-container" class="topbar-container" />
     </template>

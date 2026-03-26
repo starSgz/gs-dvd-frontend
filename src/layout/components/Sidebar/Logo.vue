@@ -35,7 +35,7 @@ const getLogoBackground = computed(() => {
     return 'var(--sidebar-bg)';
   }
   if (settingsStore.navType == 3) {
-    return variables.menuLightBg
+    return '#FBF9F5'
   }
   return sideTheme.value === 'theme-dark' ? variables.menuBg : variables.menuLightBg;
 });
@@ -46,7 +46,7 @@ const getLogoTextColor = computed(() => {
     return 'var(--sidebar-text)';
   }
   if (settingsStore.navType == 3) {
-    return variables.menuLightText
+    return '#5f5b53'
   }
   return sideTheme.value === 'theme-dark' ? '#5f5b53' : variables.menuLightText;
 });
