@@ -1,5 +1,7 @@
 <template>
-  <div class="dvd-wrapper">
+  <div ref="screenStageRef" class="screen-stage">
+    <div class="screen-stage__viewport" :style="screenScaleStyle">
+      <div class="dvd-wrapper">
     <div class="head clearfix">
       <h1 class="">抖店数据大屏</h1>
       <div class="head-controls">
@@ -187,27 +189,54 @@
         </li>
       </ul>
     </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import mapJson from './js/china.json';
 import * as echarts from 'echarts';
 import { getDdGeoOrderStats, getDdStoreList, getDdDailyOrderList, getDdDailyOverviewMetrics, getDdCategoryStats, getDdTrafficTrend, getDdAccountBalance } from '@/api/dvd';
 import Screenfull from '@/components/Screenfull';
+
+const SCREEN_DESIGN_WIDTH = 1920;
+const SCREEN_DESIGN_HEIGHT = 1080;
 let timer = null;
 let charts = [];
+const screenStageRef = ref(null);
 const isImmersiveMode = ref(false);
+const screenScale = ref(1);
+
+const screenScaleStyle = computed(() => ({
+  transform: `scale(${screenScale.value})`
+}));
 
 const setImmersiveMode = (enabled) => {
   isImmersiveMode.value = enabled;
   document.body.classList.toggle('dd-immersive-mode', enabled);
+  requestAnimationFrame(() => {
+    updateScreenScale();
+    resizeCharts();
+  });
 };
 
 const handleDoubleClick = () => {
   const nextMode = !isImmersiveMode.value;
   setImmersiveMode(nextMode);
+};
+
+const updateScreenScale = () => {
+  if (!screenStageRef.value) return;
+
+  const { clientWidth, clientHeight } = screenStageRef.value;
+  if (!clientWidth || !clientHeight) return;
+
+  screenScale.value = Math.min(
+    clientWidth / SCREEN_DESIGN_WIDTH,
+    clientHeight / SCREEN_DESIGN_HEIGHT
+  );
 };
 
 // 地图下钻状态
@@ -1530,6 +1559,7 @@ const resizeCharts = () => {
 };
 
 onMounted(() => {
+  updateScreenScale();
   time();
   echarts_1();
   echarts_2();
@@ -1578,6 +1608,25 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.screen-stage {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: url(./images/53bg.png) no-repeat center center;
+  background-size: cover;
+}
+
+.screen-stage__viewport {
+  width: 1920px;
+  height: 1080px;
+  flex-shrink: 0;
+  transform-origin: center center;
+  will-change: transform;
+}
+
 @font-face {
   font-family: electronicFont;
   src: url(./font/DS-DIGIT.TTF)
@@ -2539,7 +2588,11 @@ body.dd-immersive-mode .fixed-header + .app-main {
   padding: 0 !important;
 }
 
-body.dd-immersive-mode .dvd-wrapper {
+body.dd-immersive-mode .screen-stage {
   height: 100vh !important;
+}
+
+body.dd-immersive-mode .dvd-wrapper {
+  height: 1080px !important;
 }
 </style>

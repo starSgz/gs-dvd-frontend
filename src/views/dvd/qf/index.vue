@@ -1,5 +1,7 @@
 <template>
-  <div class="dashboard-container">
+  <div ref="screenStageRef" class="screen-stage">
+    <div class="screen-stage__viewport" :style="screenScaleStyle">
+      <div class="dashboard-container">
     <!-- 头部 -->
     <div class="header">
       <!-- 头部主体背景形状 -->
@@ -282,6 +284,8 @@
           </div>
           <div ref="chartPlatform" class="chart-box"></div>
         </div>
+        </div>
+      </div>
       </div>
     </div>
   </div>
@@ -292,6 +296,9 @@ import * as echarts from 'echarts'
 import { markRaw } from 'vue'
 import { getAllDashboardData, getStoreList, getRealtimeMetrics, getRealtimeTrend, getTopStores, getRealtimeOrders, getSkuSalesData } from '@/api/dvd'
 import Screenfull from '@/components/Screenfull'
+
+const SCREEN_DESIGN_WIDTH = 1920
+const SCREEN_DESIGN_HEIGHT = 1080
 
 export default {
   name: 'DvdQfDashboard',
@@ -326,6 +333,7 @@ export default {
       skuSalesData: [],
       refreshTimer: null,
       isImmersiveMode: false,
+      screenScale: 1,
       resizeObserver: null, // ResizeObserver 实例
       resizeTimeout: null, // 防抖定时器
     }
@@ -347,6 +355,11 @@ export default {
       return {
         integer: parseFloat(parts[0]).toLocaleString('zh-CN'),
         decimal: parts[1] || '00'
+      }
+    },
+    screenScaleStyle() {
+      return {
+        transform: `scale(${this.screenScale})`
       }
     },
   },
@@ -421,6 +434,22 @@ export default {
     setImmersiveMode(enabled) {
       this.isImmersiveMode = enabled
       document.body.classList.toggle('qf-immersive-mode', enabled)
+      requestAnimationFrame(() => {
+        this.updateScreenScale()
+        this.handleResize()
+      })
+    },
+    updateScreenScale() {
+      const container = this.$refs.screenStageRef
+      if (!container) return
+
+      const { clientWidth, clientHeight } = container
+      if (!clientWidth || !clientHeight) return
+
+      this.screenScale = Math.min(
+        clientWidth / SCREEN_DESIGN_WIDTH,
+        clientHeight / SCREEN_DESIGN_HEIGHT
+      )
     },
     updateTime() {
       const now = new Date()
@@ -960,12 +989,13 @@ export default {
       })
       
       // 监听 dashboard-container 元素
-      const container = this.$el
+      const container = this.$refs.screenStageRef
       if (container) {
         this.resizeObserver.observe(container)
       }
     },
     handleResize() {
+      this.updateScreenScale()
       const instances = ['chartGmvInstance', 'chartOrdersInstance', 'chartPlatformInstance']
       instances.forEach(name => {
         if (this[name]) this[name].resize()
@@ -1001,6 +1031,25 @@ export default {
 </script>
 
 <style scoped>
+.screen-stage {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #031B18 url('@/assets/bg/dvd-bg.png') no-repeat center center;
+  background-size: cover;
+}
+
+.screen-stage__viewport {
+  width: 1920px;
+  height: 1080px;
+  flex-shrink: 0;
+  transform-origin: center center;
+  will-change: transform;
+}
+
 /* --- 全局样式 --- */
 * {
   margin: 0;
@@ -1942,8 +1991,12 @@ body.qf-immersive-mode .fixed-header + .app-main {
   padding: 0 !important;
 }
 
-body.qf-immersive-mode .dashboard-container {
+body.qf-immersive-mode .screen-stage {
   height: 100vh !important;
+}
+
+body.qf-immersive-mode .dashboard-container {
+  height: 1080px !important;
 }
 
 </style>

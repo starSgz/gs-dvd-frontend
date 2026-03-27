@@ -1,5 +1,7 @@
 <template>
-  <div class="dvd-screen">
+  <div ref="screenStageRef" class="screen-stage">
+    <div class="screen-stage__viewport" :style="screenScaleStyle">
+      <div class="dvd-screen">
     <!-- 头部模块 -->
     <header>
       <div class="header-title">
@@ -36,8 +38,8 @@
             </div>
           </div>
           <div class="top5-content">
-            <ul ref="top5ListRef">
-              <li v-for="(item, index) in brandTop5" :key="index">
+            <ul ref="topStoresListRef">
+              <li v-for="(item, index) in topStores" :key="index">
                 <div class="cicle"></div>
                 <div class="li-content">
                   <span>{{ item.name }}</span>
@@ -62,7 +64,7 @@
               <div class="data">
                 <span>退款率</span>
               </div>
-              <div class="shoeChart" ref="shoeChartRef"></div>
+              <div class="shoeChart" ref="refundRateChartRef"></div>
             </li>
             <li>
               <div class="showImg">
@@ -71,45 +73,45 @@
               <div class="data">
                 <span>投放费比</span>
               </div>
-              <div class="clothesChart" ref="clothesChartRef"></div>
+              <div class="clothesChart" ref="adExpenseChartRef"></div>
             </li>
           </ul>
         </div>
       </div>
 
       <!-- 中间：销售总额 -->
-      <div class="col-center total" ref="totalRef">
+      <div class="col-center total" ref="metricsCenterRef">
         <div class="data1">
           <span>用户支付金额</span>
-          <p>{{ salesMetrics.payAmt }}</p>
+          <p>{{ overviewMetrics.payAmt }}</p>
         </div>
         <div class="data2">
           <span>成交订单数</span>
-          <p>{{ salesMetrics.payCnt }}</p>
+          <p>{{ overviewMetrics.payCnt }}</p>
         </div>
         <div class="data3">
           <span>商品曝光人数</span>
-          <p>{{ salesMetrics.productShowUcnt }}</p>
+          <p>{{ overviewMetrics.productShowUcnt }}</p>
         </div>
         <div class="data4">
           <span>退款金额(支付时间)</span>
-          <p>{{ salesMetrics.refundAmtPayTime }}</p>
+          <p>{{ overviewMetrics.refundAmtPayTime }}</p>
         </div>
         <div class="data5">
           <span>待发货</span>
-          <p>{{ salesMetrics.unsend }}</p>
+          <p>{{ overviewMetrics.unsend }}</p>
         </div>
         <div class="data6">
           <span>退款订单数</span>
-          <p>{{ salesMetrics.refundOrderCnt }}</p>
+          <p>{{ overviewMetrics.refundOrderCnt }}</p>
         </div>
-        <canvas class="rain" ref="rainRef"></canvas>
-        <canvas class="dashed" ref="dashedRef"></canvas>
+        <canvas class="rain" ref="rainCanvasRef"></canvas>
+        <canvas class="dashed" ref="dashedCanvasRef"></canvas>
         <div class="sphere">
           <div class="sphere-bg"></div>
           <div class="sum">
             <span>成交金额</span>
-            <p>{{ salesMetrics.incomeAmt }}</p>
+            <p>{{ overviewMetrics.incomeAmt }}</p>
           </div>
         </div>
         <div class="cicle3"></div>
@@ -118,15 +120,15 @@
         <div class="cicle6"></div>
         <div class="cicle7"></div>
         <div class="cicle8">
-          <span>{{ salesMetrics.metrics?.adCost }}</span>
+          <span>{{ overviewMetrics.metrics?.adCost }}</span>
           <p>投放消耗</p>
         </div>
         <div class="cicle9">
-          <span>{{ salesMetrics.metrics?.perUsrPayAmt }}</span>
+          <span>{{ overviewMetrics.metrics?.perUsrPayAmt }}</span>
           <p>客单价</p>
         </div>
         <div class="cicle10">
-          <span>{{ salesMetrics.metrics?.conversionRate }}%</span>
+          <span>{{ overviewMetrics.metrics?.conversionRate }}%</span>
           <p>转化率</p>
         </div>
       </div>
@@ -143,18 +145,18 @@
             <div class="cicle2"></div>
             <div class="waterChart1">
               <div class="chart-title">商品点击(成交转化率(次数))</div>
-              <div class="chart1" ref="chart1Ref"></div>
+              <div class="chart1" ref="clickConversionChartRef"></div>
             </div>
             <div class="waterChart2">
               <div class="chart-title">商品曝光(点击转化率)</div>
-              <div class="chart2" ref="chart2Ref"></div>
+              <div class="chart2" ref="exposureConversionChartRef"></div>
             </div>
           </div>
         </div>
         <!-- 柱状图 - 支出金额 -->
-        <div class="barChart" ref="barChartRef"></div>
+        <div class="barChart" ref="hourlyExpenseChartRef"></div>
         <!-- 折线图 -->
-        <div class="lineChart" ref="lineChartRef"></div>
+        <div class="lineChart" ref="hourlyIncomeChartRef"></div>
       </div>
     </div>
 
@@ -163,6 +165,8 @@
       <h5><span>数据状况</span></h5>
       <p>Data Status</p>
     </div> -->
+      </div>
+    </div>
   </div>
 </template>
 
@@ -184,35 +188,59 @@ import greenImg from './images/green.png';
 
 
 // Refs
-const top5ListRef = ref(null);
-const totalRef = ref(null);
-const rainRef = ref(null);
-const dashedRef = ref(null);
-const chart1Ref = ref(null);
-const chart2Ref = ref(null);
-const shoeChartRef = ref(null);
-const clothesChartRef = ref(null);
-const mzChartRef = ref(null);
-const barChartRef = ref(null);
-const lineChartRef = ref(null);
+const SCREEN_DESIGN_WIDTH = 1920;
+const SCREEN_DESIGN_HEIGHT = 1080;
+
+const screenStageRef = ref(null);
+const topStoresListRef = ref(null);
+const metricsCenterRef = ref(null);
+const rainCanvasRef = ref(null);
+const dashedCanvasRef = ref(null);
+const clickConversionChartRef = ref(null);
+const exposureConversionChartRef = ref(null);
+const refundRateChartRef = ref(null);
+const adExpenseChartRef = ref(null);
+const hourlyExpenseChartRef = ref(null);
+const hourlyIncomeChartRef = ref(null);
 const isImmersiveMode = ref(false);
+const screenScale = ref(1);
+
+const screenScaleStyle = computed(() => ({
+  transform: `scale(${screenScale.value})`
+}));
 
 // State for cleanup
-let intervalId = null;
-let lineChartIntervalId = null;
-let rainAnimId = null;
-let resizeObserver = null;
-let resizeTimeout = null;
+let topStoresHighlightTimer = null;
+let hourlyIncomeTooltipTimer = null;
+let rainAnimationFrameId = null;
+let viewportResizeObserver = null;
+let viewportResizeTimeout = null;
 const charts = [];
 
 const setImmersiveMode = (enabled) => {
   isImmersiveMode.value = enabled;
   document.body.classList.toggle('realdd-immersive-mode', enabled);
+  requestAnimationFrame(() => {
+    updateScreenScale();
+    handleStageResize();
+  });
 };
 
 const handleDoubleClick = () => {
   const nextMode = !isImmersiveMode.value;
   setImmersiveMode(nextMode);
+};
+
+const updateScreenScale = () => {
+  if (!screenStageRef.value) return;
+
+  const { clientWidth, clientHeight } = screenStageRef.value;
+  if (!clientWidth || !clientHeight) return;
+
+  screenScale.value = Math.min(
+    clientWidth / SCREEN_DESIGN_WIDTH,
+    clientHeight / SCREEN_DESIGN_HEIGHT
+  );
 };
 
 // 响应式数据
@@ -223,8 +251,8 @@ const sortBy = ref('amount'); // 排序方式：'amount'-成交金额，'orders'
 const storeList = ref([]);
 
 // 数据状态
-const brandTop5 = ref([]);
-const salesMetrics = ref({
+const topStores = ref([]);
+const overviewMetrics = ref({
   payAmt: 0,
   payCnt: 0,
   productShowUcnt: 0,
@@ -234,23 +262,23 @@ const salesMetrics = ref({
   refundOrderCnt: 0,
   unsend: 0,
 });
-const meetingMetrics = ref({
+const conversionMetrics = ref({
   target: 0,
   actual: 0,
   ratio: 0,
   productClickPayCntRatio: 0,
   productShowClickCntRatio: 0
 });
-const categoryMetrics = ref({
+const categoryProgressMetrics = ref({
   refundAmtRate: { count: 52563, max: 65000 },
   adExpenseRatioWithRefund: { count: 32563, max: 45000 },
   accessories: { count: 12563, max: 35000 }
 });
 
 // TOP5 Color Loop
-const topColor = () => {
-  if (!top5ListRef.value) return;
-  const lis = top5ListRef.value.querySelectorAll('li');
+const startTopStoresHighlightCycle = () => {
+  if (!topStoresListRef.value) return;
+  const lis = topStoresListRef.value.querySelectorAll('li');
   const length = lis.length;
   let i = 1;
 
@@ -278,8 +306,8 @@ const topColor = () => {
   // Set initial
   updateStyles(0);
   
-  intervalId = setInterval(() => {
-    if (!top5ListRef.value) return; 
+  topStoresHighlightTimer = setInterval(() => {
+    if (!topStoresListRef.value) return; 
     updateStyles(i);
     i++;
     if (i === length) {
@@ -678,13 +706,13 @@ const initLineChart = (dom, hourlyData = []) => {
   };
 
   // 清除之前的定时器
-  if (lineChartIntervalId) {
-    clearInterval(lineChartIntervalId);
+  if (hourlyIncomeTooltipTimer) {
+    clearInterval(hourlyIncomeTooltipTimer);
   }
 
   // 自动轮播 tooltip
   let index = 0;
-  lineChartIntervalId = setInterval(() => {
+  hourlyIncomeTooltipTimer = setInterval(() => {
     chart.dispatchAction({
       type: 'showTip',
       seriesIndex: 0,
@@ -700,13 +728,13 @@ const initLineChart = (dom, hourlyData = []) => {
 };
 
 // Rain Background
-const initRainBg = () => {
-  const c = rainRef.value;
-  if (!c || !totalRef.value) return;
+const initRainBackground = () => {
+  const c = rainCanvasRef.value;
+  if (!c || !metricsCenterRef.value) return;
   
   const ctx = c.getContext("2d");
-  let w = c.width = totalRef.value.clientWidth;
-  let h = c.height = totalRef.value.clientHeight;
+  let w = c.width = metricsCenterRef.value.clientWidth;
+  let h = c.height = metricsCenterRef.value.clientHeight;
 
   const random = (min, max) => Math.random() * (max - min) + min;
 
@@ -754,20 +782,20 @@ const initRainBg = () => {
     for (let i = 0; i < rs.length; i++) {
       rs[i].draw();
     }
-    rainAnimId = requestAnimationFrame(anim);
+    rainAnimationFrameId = requestAnimationFrame(anim);
   };
 
   anim();
 };
 
 // Dashed Line
-const initDashed = () => {
-  const canvas = dashedRef.value;
-  if (!canvas || !totalRef.value) return;
+const initDashedOverlay = () => {
+  const canvas = dashedCanvasRef.value;
+  if (!canvas || !metricsCenterRef.value) return;
   
   const ctx = canvas.getContext('2d');
-  const w = canvas.width = totalRef.value.clientWidth;
-  const h = canvas.height = totalRef.value.clientHeight / 3 * 2;
+  const w = canvas.width = metricsCenterRef.value.clientWidth;
+  const h = canvas.height = metricsCenterRef.value.clientHeight / 3 * 2;
   
   ctx.lineWidth = 3;
   ctx.setLineDash([3, 3]);
@@ -808,32 +836,33 @@ const initDashed = () => {
   drawCurve(w / 5 * 3.8, h / 2 * 1.2, w / 5 * 3.7, h / 2 * 1.6, w / 5 * 2.9, h, [[0, "#e08d03"], [1, "#2e6a5c"]]);
 };
 
-const handleResize = () => {
+const handleStageResize = () => {
+  updateScreenScale();
   charts.forEach(chart => chart.resize());
   // Re-init canvas if needed
-  if (rainRef.value && totalRef.value) {
-    rainRef.value.width = totalRef.value.clientWidth;
-    rainRef.value.height = totalRef.value.clientHeight;
+  if (rainCanvasRef.value && metricsCenterRef.value) {
+    rainCanvasRef.value.width = metricsCenterRef.value.clientWidth;
+    rainCanvasRef.value.height = metricsCenterRef.value.clientHeight;
   }
-  if (dashedRef.value && totalRef.value) {
-    dashedRef.value.width = totalRef.value.clientWidth;
-    dashedRef.value.height = totalRef.value.clientHeight / 3 * 2;
-    initDashed(); // Redraw dashed lines
+  if (dashedCanvasRef.value && metricsCenterRef.value) {
+    dashedCanvasRef.value.width = metricsCenterRef.value.clientWidth;
+    dashedCanvasRef.value.height = metricsCenterRef.value.clientHeight / 3 * 2;
+    initDashedOverlay(); // Redraw dashed lines
   }
 };
 
 // 初始化 ResizeObserver
-const initResizeObserver = () => {
-  resizeObserver = new ResizeObserver(() => {
-    if (resizeTimeout) clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      handleResize();
+const initStageResizeObserver = () => {
+  viewportResizeObserver = new ResizeObserver(() => {
+    if (viewportResizeTimeout) clearTimeout(viewportResizeTimeout);
+    viewportResizeTimeout = setTimeout(() => {
+      handleStageResize();
     }, 100);
   });
   
-  const container = document.querySelector('.dvd-screen');
+  const container = screenStageRef.value;
   if (container) {
-    resizeObserver.observe(container);
+    viewportResizeObserver.observe(container);
   }
 };
 
@@ -867,12 +896,12 @@ const loadStoreTop5 = async () => {
     
     const response = await getDdStore(params);
     if (response.code === 200 && response.data) {
-      brandTop5.value = response.data;
+      topStores.value = response.data;
     }
   } catch (error) {
     console.error('加载店铺TOP5失败:', error);
     // 失败时使用空数组
-    brandTop5.value = [];
+    topStores.value = [];
   }
 };
 
@@ -891,7 +920,7 @@ const loadOverviewMetrics = async () => {
       const data = response.data;
       
       // 填充销售指标数据
-      salesMetrics.value = {
+      overviewMetrics.value = {
         payAmt: data.payAmt || 0,  // 用户支付金额
         payCnt: data.payCnt || 0,  // 成交订单数
         productShowUcnt: data.productShowUcnt || 0,  // 商品曝光人数
@@ -907,7 +936,7 @@ const loadOverviewMetrics = async () => {
       };
       
       // 填充会销指标数据（水球图）
-      meetingMetrics.value = {
+      conversionMetrics.value = {
         target: 0,
         actual: 0,
         ratio: 0,
@@ -916,7 +945,7 @@ const loadOverviewMetrics = async () => {
       };
       
       // 填充分类指标（退款率、投放费比）
-      categoryMetrics.value = {
+      categoryProgressMetrics.value = {
         refundAmtRate: { count: data.refundAmtRate || 0, max: 100 },  // 退款率
         adExpenseRatioWithRefund: { count: data.adExpenseRatioWithRefund || 0, max: 100 },  // 投放费比
         accessories: { count: 0, max: 100 }
@@ -924,7 +953,7 @@ const loadOverviewMetrics = async () => {
       
       // 更新图表
       nextTick(() => {
-        updateAllCharts();
+        refreshOverviewCharts();
       });
     }
   } catch (error) {
@@ -933,7 +962,7 @@ const loadOverviewMetrics = async () => {
 };
 
 // 加载小时趋势数据（支付金额）
-const loadHourlyTrend = async () => {
+const loadHourlyIncomeTrend = async () => {
   try {
     const params = {
       index_display: '今日用户支付金额'  // 指定查询的指标
@@ -949,20 +978,20 @@ const loadHourlyTrend = async () => {
     if (response.code === 200 && response.data) {
       // 更新折线图
       nextTick(() => {
-        initLineChart(lineChartRef.value, response.data);
+        initLineChart(hourlyIncomeChartRef.value, response.data);
       });
     }
   } catch (error) {
     console.error('加载小时趋势失败:', error);
     // 失败时使用空数据
     nextTick(() => {
-      initLineChart(lineChartRef.value, []);
+      initLineChart(hourlyIncomeChartRef.value, []);
     });
   }
 };
 
 // 加载小时支出金额数据（柱状图）
-const loadHourlyExpense = async () => {
+const loadHourlyExpenseTrend = async () => {
   try {
     const params = {
       index_display: '今日支出金额'  // 指定查询支出金额指标
@@ -978,14 +1007,14 @@ const loadHourlyExpense = async () => {
     if (response.code === 200 && response.data) {
       // 更新柱状图
       nextTick(() => {
-        initBarChartHourly(barChartRef.value, response.data);
+        initBarChartHourly(hourlyExpenseChartRef.value, response.data);
       });
     }
   } catch (error) {
     console.error('加载小时支出金额失败:', error);
     // 失败时使用空数据
     nextTick(() => {
-      initBarChartHourly(barChartRef.value, []);
+      initBarChartHourly(hourlyExpenseChartRef.value, []);
     });
   }
 };
@@ -995,52 +1024,53 @@ const handleStoreChange = () => {
   console.log('店铺变化:', selectedStore.value);
   loadStoreTop5();
   loadOverviewMetrics();
-  loadHourlyTrend();
-  loadHourlyExpense();
+  loadHourlyIncomeTrend();
+  loadHourlyExpenseTrend();
 };
 
 // 更新所有图表
-const updateAllCharts = () => {
-  initWaterChart(chart1Ref.value, meetingMetrics.value.productClickPayCntRatio);
-  initWaterChart(chart2Ref.value, meetingMetrics.value.productShowClickCntRatio);
-  initBarChart(shoeChartRef.value, categoryMetrics.value.refundAmtRate.count, '', categoryMetrics.value.refundAmtRate.max, '#09c4ca');
-  initBarChart(clothesChartRef.value, categoryMetrics.value.adExpenseRatioWithRefund.count, '', categoryMetrics.value.adExpenseRatioWithRefund.max, '#09c4ca');
-  initBarChart(mzChartRef.value, categoryMetrics.value.accessories.count, '', categoryMetrics.value.accessories.max, '#09c4ca');
+const refreshOverviewCharts = () => {
+  initWaterChart(clickConversionChartRef.value, conversionMetrics.value.productClickPayCntRatio);
+  initWaterChart(exposureConversionChartRef.value, conversionMetrics.value.productShowClickCntRatio);
+  initBarChart(refundRateChartRef.value, categoryProgressMetrics.value.refundAmtRate.count, '', categoryProgressMetrics.value.refundAmtRate.max, '#09c4ca');
+  initBarChart(adExpenseChartRef.value, categoryProgressMetrics.value.adExpenseRatioWithRefund.count, '', categoryProgressMetrics.value.adExpenseRatioWithRefund.max, '#09c4ca');
 };
 
 onMounted(async () => {
-  window.addEventListener('resize', handleResize);
+  window.addEventListener('resize', handleStageResize);
   document.addEventListener('dblclick', handleDoubleClick);
-  initResizeObserver();
+  updateScreenScale();
+  initStageResizeObserver();
   
   // 加载店铺列表和数据
   await loadStoreList();
   await loadStoreTop5();
   await loadOverviewMetrics();
-  await loadHourlyTrend();
-  await loadHourlyExpense();
+  await loadHourlyIncomeTrend();
+  await loadHourlyExpenseTrend();
   
   nextTick(() => {
-    topColor();
-    initRainBg();
-    initDashed();
+    startTopStoresHighlightCycle();
+    initRainBackground();
+    initDashedOverlay();
+    handleStageResize();
   });
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize);
+  window.removeEventListener('resize', handleStageResize);
   document.removeEventListener('dblclick', handleDoubleClick);
   setImmersiveMode(false);
   
-  if (resizeTimeout) clearTimeout(resizeTimeout);
-  if (resizeObserver) {
-    resizeObserver.disconnect();
-    resizeObserver = null;
+  if (viewportResizeTimeout) clearTimeout(viewportResizeTimeout);
+  if (viewportResizeObserver) {
+    viewportResizeObserver.disconnect();
+    viewportResizeObserver = null;
   }
   
-  if (intervalId) clearInterval(intervalId);
-  if (lineChartIntervalId) clearInterval(lineChartIntervalId);
-  if (rainAnimId) cancelAnimationFrame(rainAnimId);
+  if (topStoresHighlightTimer) clearInterval(topStoresHighlightTimer);
+  if (hourlyIncomeTooltipTimer) clearInterval(hourlyIncomeTooltipTimer);
+  if (rainAnimationFrameId) cancelAnimationFrame(rainAnimationFrameId);
   
   charts.forEach(chart => chart.dispose());
 });
@@ -1048,9 +1078,28 @@ onUnmounted(() => {
 
 <style scoped>
 /* Scoped styles based on original CSS */
-.dvd-screen {
+.screen-stage {
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: url(./images/53bg.png) no-repeat center center;
+  background-size: cover;
+}
+
+.screen-stage__viewport {
+  width: 1920px;
+  height: 1080px;
+  flex-shrink: 0;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.dvd-screen {
+  width: 1920px;
+  height: 1080px;
   overflow: hidden;
   background: url(./images/53bg.png) no-repeat;
   background-size: 100% 100%;
@@ -2104,7 +2153,11 @@ body.realdd-immersive-mode .fixed-header + .app-main {
   padding: 0 !important;
 }
 
-body.realdd-immersive-mode .dvd-screen {
+body.realdd-immersive-mode .screen-stage {
   height: 100vh !important;
+}
+
+body.realdd-immersive-mode .dvd-screen {
+  height: 1080px !important;
 }
 </style>
