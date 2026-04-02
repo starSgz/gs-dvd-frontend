@@ -208,8 +208,14 @@ let charts = [];
 const screenStageRef = ref(null);
 const isImmersiveMode = ref(false);
 const screenScale = ref(1);
+const viewportWidth = ref(SCREEN_DESIGN_WIDTH);
+const viewportHeight = ref(SCREEN_DESIGN_HEIGHT);
+let viewportResizeObserver = null;
+let viewportResizeTimeout = null;
 
 const screenScaleStyle = computed(() => ({
+  width: `${viewportWidth.value}px`,
+  height: `${viewportHeight.value}px`,
   transform: `scale(${screenScale.value})`
 }));
 
@@ -233,10 +239,30 @@ const updateScreenScale = () => {
   const { clientWidth, clientHeight } = screenStageRef.value;
   if (!clientWidth || !clientHeight) return;
 
-  screenScale.value = Math.min(
-    clientWidth / SCREEN_DESIGN_WIDTH,
-    clientHeight / SCREEN_DESIGN_HEIGHT
-  );
+  const widthScale = clientWidth / SCREEN_DESIGN_WIDTH;
+  const heightScale = clientHeight / SCREEN_DESIGN_HEIGHT;
+
+  screenScale.value = Math.min(widthScale, heightScale);
+  viewportWidth.value = SCREEN_DESIGN_WIDTH;
+  viewportHeight.value = SCREEN_DESIGN_HEIGHT;
+
+  if (isImmersiveMode.value && widthScale > heightScale) {
+    viewportWidth.value = Math.round(clientWidth / screenScale.value);
+  }
+};
+
+const initStageResizeObserver = () => {
+  if (!screenStageRef.value || typeof ResizeObserver === 'undefined') return;
+
+  viewportResizeObserver = new ResizeObserver(() => {
+    if (viewportResizeTimeout) clearTimeout(viewportResizeTimeout);
+    viewportResizeTimeout = setTimeout(() => {
+      updateScreenScale();
+      resizeCharts();
+    }, 80);
+  });
+
+  viewportResizeObserver.observe(screenStageRef.value);
 };
 
 // 地图下钻状态
@@ -1549,6 +1575,7 @@ const init = async (adcode) => {
 };
 
 const resizeCharts = () => {
+  updateScreenScale();
   charts.forEach(chart => {
     chart.resize();
   });
@@ -1576,6 +1603,7 @@ onMounted(() => {
   loadAccountBalance();
   loadCategoryStats();
   loadTrafficTrend();
+  initStageResizeObserver();
   window.addEventListener("resize", resizeCharts);
   document.addEventListener('dblclick', handleDoubleClick);
 });
@@ -1584,6 +1612,14 @@ onUnmounted(() => {
   if (timer) clearTimeout(timer);
   window.removeEventListener("resize", resizeCharts);
   document.removeEventListener('dblclick', handleDoubleClick);
+  if (viewportResizeTimeout) {
+    clearTimeout(viewportResizeTimeout);
+    viewportResizeTimeout = null;
+  }
+  if (viewportResizeObserver) {
+    viewportResizeObserver.disconnect();
+    viewportResizeObserver = null;
+  }
   setImmersiveMode(false);
   charts.forEach(chart => chart.dispose());
   charts = [];

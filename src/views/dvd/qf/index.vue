@@ -334,6 +334,8 @@ export default {
       refreshTimer: null,
       isImmersiveMode: false,
       screenScale: 1,
+      viewportWidth: SCREEN_DESIGN_WIDTH,
+      viewportHeight: SCREEN_DESIGN_HEIGHT,
       resizeObserver: null, // ResizeObserver 实例
       resizeTimeout: null, // 防抖定时器
     }
@@ -359,6 +361,8 @@ export default {
     },
     screenScaleStyle() {
       return {
+        width: `${this.viewportWidth}px`,
+        height: `${this.viewportHeight}px`,
         transform: `scale(${this.screenScale})`
       }
     },
@@ -446,10 +450,16 @@ export default {
       const { clientWidth, clientHeight } = container
       if (!clientWidth || !clientHeight) return
 
-      this.screenScale = Math.min(
-        clientWidth / SCREEN_DESIGN_WIDTH,
-        clientHeight / SCREEN_DESIGN_HEIGHT
-      )
+      const widthScale = clientWidth / SCREEN_DESIGN_WIDTH
+      const heightScale = clientHeight / SCREEN_DESIGN_HEIGHT
+
+      this.screenScale = Math.min(widthScale, heightScale)
+      this.viewportWidth = SCREEN_DESIGN_WIDTH
+      this.viewportHeight = SCREEN_DESIGN_HEIGHT
+
+      if (this.isImmersiveMode && widthScale > heightScale) {
+        this.viewportWidth = Math.round(clientWidth / this.screenScale)
+      }
     },
     updateTime() {
       const now = new Date()

@@ -204,8 +204,12 @@ const hourlyExpenseChartRef = ref(null);
 const hourlyIncomeChartRef = ref(null);
 const isImmersiveMode = ref(false);
 const screenScale = ref(1);
+const viewportWidth = ref(SCREEN_DESIGN_WIDTH);
+const viewportHeight = ref(SCREEN_DESIGN_HEIGHT);
 
 const screenScaleStyle = computed(() => ({
+  width: `${viewportWidth.value}px`,
+  height: `${viewportHeight.value}px`,
   transform: `scale(${screenScale.value})`
 }));
 
@@ -237,10 +241,16 @@ const updateScreenScale = () => {
   const { clientWidth, clientHeight } = screenStageRef.value;
   if (!clientWidth || !clientHeight) return;
 
-  screenScale.value = Math.min(
-    clientWidth / SCREEN_DESIGN_WIDTH,
-    clientHeight / SCREEN_DESIGN_HEIGHT
-  );
+  const widthScale = clientWidth / SCREEN_DESIGN_WIDTH;
+  const heightScale = clientHeight / SCREEN_DESIGN_HEIGHT;
+
+  screenScale.value = Math.min(widthScale, heightScale);
+  viewportWidth.value = SCREEN_DESIGN_WIDTH;
+  viewportHeight.value = SCREEN_DESIGN_HEIGHT;
+
+  if (isImmersiveMode.value && widthScale > heightScale) {
+    viewportWidth.value = Math.round(clientWidth / screenScale.value);
+  }
 };
 
 // 响应式数据
@@ -1098,14 +1108,15 @@ onUnmounted(() => {
 }
 
 .dvd-screen {
-  width: 1920px;
-  height: 1080px;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   background: url(./images/53bg.png) no-repeat;
   background-size: 100% 100%;
   font-family: 'Microsoft YaHei', sans-serif;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 ul,
