@@ -476,6 +476,7 @@ export default {
     })
     window.addEventListener('resize', this.handleResize)
     document.addEventListener('dblclick', this.handleDoubleClick)
+    document.addEventListener('keydown', this.handleEscapeKey)
   },
   beforeUnmount() {
     if (this.clockTimer) clearInterval(this.clockTimer)
@@ -486,6 +487,7 @@ export default {
     }
     window.removeEventListener('resize', this.handleResize)
     document.removeEventListener('dblclick', this.handleDoubleClick)
+    document.removeEventListener('keydown', this.handleEscapeKey)
     document.body.classList.remove('xgj-immersive-mode')
     this.disposeCharts()
   },
@@ -497,6 +499,21 @@ export default {
     },
     handleDoubleClick() {
       this.setImmersiveMode(!this.isImmersiveMode)
+    },
+    async handleEscapeKey(event) {
+      if (event.key !== 'Escape' && event.key !== 'Esc') return
+
+      if (document.fullscreenElement && document.exitFullscreen) {
+        try {
+          await document.exitFullscreen()
+        } catch (error) {
+          // Ignore fullscreen exit failures and still restore immersive mode.
+        }
+      }
+
+      if (this.isImmersiveMode) {
+        this.setImmersiveMode(false)
+      }
     },
     setImmersiveMode(enabled) {
       this.isImmersiveMode = enabled
@@ -518,7 +535,7 @@ export default {
       this.viewportHeight = SCREEN_DESIGN_HEIGHT
       this.viewportWidth = SCREEN_DESIGN_WIDTH
 
-      if (this.isImmersiveMode && widthScale > heightScale) {
+      if (widthScale > heightScale) {
         this.viewportWidth = Math.round(clientWidth / this.screenScale)
       }
     },

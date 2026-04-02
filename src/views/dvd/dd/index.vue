@@ -233,6 +233,22 @@ const handleDoubleClick = () => {
   setImmersiveMode(nextMode);
 };
 
+const handleEscapeKey = async (event) => {
+  if (event.key !== 'Escape' && event.key !== 'Esc') return;
+
+  if (document.fullscreenElement && document.exitFullscreen) {
+    try {
+      await document.exitFullscreen();
+    } catch (error) {
+      // Ignore fullscreen exit failures and still restore immersive mode.
+    }
+  }
+
+  if (isImmersiveMode.value) {
+    setImmersiveMode(false);
+  }
+};
+
 const updateScreenScale = () => {
   if (!screenStageRef.value) return;
 
@@ -246,7 +262,7 @@ const updateScreenScale = () => {
   viewportWidth.value = SCREEN_DESIGN_WIDTH;
   viewportHeight.value = SCREEN_DESIGN_HEIGHT;
 
-  if (isImmersiveMode.value && widthScale > heightScale) {
+  if (widthScale > heightScale) {
     viewportWidth.value = Math.round(clientWidth / screenScale.value);
   }
 };
@@ -1606,12 +1622,14 @@ onMounted(() => {
   initStageResizeObserver();
   window.addEventListener("resize", resizeCharts);
   document.addEventListener('dblclick', handleDoubleClick);
+  document.addEventListener('keydown', handleEscapeKey);
 });
 
 onUnmounted(() => {
   if (timer) clearTimeout(timer);
   window.removeEventListener("resize", resizeCharts);
   document.removeEventListener('dblclick', handleDoubleClick);
+  document.removeEventListener('keydown', handleEscapeKey);
   if (viewportResizeTimeout) {
     clearTimeout(viewportResizeTimeout);
     viewportResizeTimeout = null;

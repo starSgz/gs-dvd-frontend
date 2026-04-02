@@ -403,6 +403,7 @@ export default {
 
     // 添加双击事件监听器，实现双击任意位置全屏
     document.addEventListener('dblclick', this.handleDoubleClick)
+    document.addEventListener('keydown', this.handleEscapeKey)
   },
   beforeUnmount() {
     if (this.refreshTimer) {
@@ -419,6 +420,7 @@ export default {
     }
     // 移除双击事件监听器
     document.removeEventListener('dblclick', this.handleDoubleClick)
+    document.removeEventListener('keydown', this.handleEscapeKey)
     window.removeEventListener('resize', this.handleResize)
     this.setImmersiveMode(false)
     const instances = ['chartGmvInstance', 'chartOrdersInstance', 'chartPlatformInstance']
@@ -434,6 +436,21 @@ export default {
       // 双击任意位置切换全屏
       const nextMode = !this.isImmersiveMode
       this.setImmersiveMode(nextMode)
+    },
+    async handleEscapeKey(event) {
+      if (event.key !== 'Escape' && event.key !== 'Esc') return
+
+      if (document.fullscreenElement && document.exitFullscreen) {
+        try {
+          await document.exitFullscreen()
+        } catch (error) {
+          // Ignore fullscreen exit failures and still restore immersive mode.
+        }
+      }
+
+      if (this.isImmersiveMode) {
+        this.setImmersiveMode(false)
+      }
     },
     setImmersiveMode(enabled) {
       this.isImmersiveMode = enabled
@@ -457,7 +474,7 @@ export default {
       this.viewportWidth = SCREEN_DESIGN_WIDTH
       this.viewportHeight = SCREEN_DESIGN_HEIGHT
 
-      if (this.isImmersiveMode && widthScale > heightScale) {
+      if (widthScale > heightScale) {
         this.viewportWidth = Math.round(clientWidth / this.screenScale)
       }
     },
