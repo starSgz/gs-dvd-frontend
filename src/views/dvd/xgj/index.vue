@@ -64,7 +64,6 @@
               <span class="main-title-icon">X</span>
               闲鱼实时经营分析大屏
             </h1>
-            <!-- <div class="header-subtitle">XGJ CHANNEL 路 {{ currentDateText }} 路 {{ currentTimeText }}</div> -->
           </div>
 
           <div class="header-controls">
@@ -153,77 +152,87 @@
 
           <section class="center-column">
             <article class="panel overview-panel workflow-panel">
-              <div class="panel-title">订单流转概览</div>
-              <div class="workflow-board">
-                <svg class="workflow-svg" viewBox="0 0 760 170" preserveAspectRatio="none" aria-hidden="true">
-                  <defs>
-                    <marker
-                      id="workflowArrow"
-                      viewBox="0 0 10 10"
-                      refX="8"
-                      refY="5"
-                      markerWidth="5"
-                      markerHeight="5"
-                      orient="auto-start-reverse"
-                    >
-                      <path d="M0 0L10 5L0 10Z" fill="#ffda00" />
-                    </marker>
-                  </defs>
-                  <path d="M140 42 H188" class="workflow-link" marker-end="url(#workflowArrow)" />
-                  <path d="M330 42 H378" class="workflow-link" marker-end="url(#workflowArrow)" />
-                  <path d="M520 42 H568" class="workflow-link" marker-end="url(#workflowArrow)" />
-                  <path d="M640 72 V120 H575" class="workflow-link" marker-end="url(#workflowArrow)" />
-                </svg>
-
-                <div
-                  v-for="node in workflowNodes"
-                  :key="node.label"
-                  class="workflow-node"
-                  :class="{ 'workflow-node--accent': node.accent }"
-                  :style="{ left: node.left, top: node.top, width: node.width || '140px' }"
-                >
-                  <div class="workflow-node-head">
-                    <span class="workflow-node-icon">{{ node.icon }}</span>
-                    <span>{{ node.label }}</span>
+              <div class="panel-title-row panel-title-row--workflow">
+                <div class="panel-title">店铺订单</div>
+                <div class="workflow-time-group">
+                  <!-- <span class="workflow-time-badge">订单快照 {{ shopOrderFlow.todayLatestCollectTime || '--' }}</span>
+                  <span class="workflow-time-badge">退款快照 {{ shopOrderFlow.refundLatestCollectTime || '--' }}</span> -->
+                </div>
+              </div>
+              <div class="shop-flow-board">
+                <div class="shop-flow-section shop-flow-section--primary">
+                  <div class="shop-flow-section-title">订单主链路</div>
+                  <div class="shop-flow-track">
+                    <template v-for="(node, index) in shopOrderPrimaryNodes" :key="node.key">
+                      <div class="shop-flow-card" :class="`shop-flow-card--${node.tone}`">
+                        <div class="shop-flow-card-head">
+                          <span class="shop-flow-card-icon">{{ node.icon }}</span>
+                          <span>{{ node.label }}</span>
+                        </div>
+                        <div class="shop-flow-card-value">{{ node.value }}</div>
+                        <div class="shop-flow-card-desc">{{ node.desc }}</div>
+                      </div>
+                      <div v-if="index < shopOrderPrimaryNodes.length - 1" :key="`${node.key}-arrow`" class="shop-flow-arrow"></div>
+                    </template>
                   </div>
-                  <div class="workflow-node-count">{{ node.count }}</div>
-                  <div class="workflow-node-value">| {{ node.amount }}</div>
+                </div>
+
+                <div class="shop-flow-section shop-flow-section--secondary">
+                  <div class="shop-flow-section-title">退款处理链路</div>
+                  <div class="shop-flow-track shop-flow-track--secondary">
+                    <template v-for="(node, index) in shopOrderRefundNodes" :key="node.key">
+                      <div class="shop-flow-card" :class="`shop-flow-card--${node.tone}`">
+                        <div class="shop-flow-card-head">
+                          <span class="shop-flow-card-icon">{{ node.icon }}</span>
+                          <span>{{ node.label }}</span>
+                        </div>
+                        <div class="shop-flow-card-value">{{ node.value }}</div>
+                        <div class="shop-flow-card-desc">{{ node.desc }}</div>
+                      </div>
+                      <div v-if="index < shopOrderRefundNodes.length - 1" :key="`${node.key}-arrow`" class="shop-flow-arrow shop-flow-arrow--secondary"></div>
+                    </template>
+                  </div>
                 </div>
               </div>
             </article>
 
             <article class="panel overview-panel rights-panel">
-              <div class="panel-title">维权监控分析</div>
+              <div class="panel-title-row">
+                <div class="panel-title">经营数据日维度分析</div>
+                <div class="chart-filter-row chart-filter-row--panel">
+                  <select v-model="selectedShop" class="chart-filter" @change="handleRightsFilterChange">
+                    <option
+                      v-for="option in shopOptions"
+                      :key="option.value"
+                      :value="option.value"
+                    >
+                      {{ option.label }}
+                    </option>
+                  </select>
+                  <input
+                    v-model="analysisStartDate"
+                    class="chart-filter"
+                    type="date"
+                  />
+                  <input
+                    v-model="analysisEndDate"
+                    class="chart-filter"
+                    type="date"
+                  />
+                  <button class="chart-filter-button" type="button" @click="handleRightsFilterChange">查询</button>
+                </div>
+              </div>
               <div class="chart-monitor-panel">
                 <div class="chart-monitor-block chart-monitor-block--top">
                   <div class="chart-block-head">
-                      <div class="chart-block-title">店铺维权量对比</div>
+                      <div class="chart-block-title">订单数量与支付金额趋势</div>
                   </div>
                   <div ref="rightsBarChartRef" class="chart-canvas chart-canvas--bar"></div>
                 </div>
 
                 <div class="chart-monitor-block chart-monitor-block--bottom">
                   <div class="chart-block-head">
-                    <div class="chart-block-title">维权趋势走势</div>
-                    <div class="chart-filter-row">
-                      <select v-model="selectedShop" class="chart-filter" @change="handleRightsFilterChange">
-                        <option
-                          v-for="option in shopOptions"
-                          :key="option.value"
-                          :value="option.value"
-                        >
-                          {{ option.label }}
-                        </option>
-                      </select>
-                      <input
-                        v-model="selectedDate"
-                        class="chart-filter"
-                        type="date"
-                        :min="availableDates[0]"
-                        :max="availableDates[availableDates.length - 1]"
-                        @change="handleRightsFilterChange"
-                      />
-                    </div>
+                    <div class="chart-block-title">退款与关闭趋势</div>
                   </div>
                   <div ref="rightsLineChartRef" class="chart-canvas chart-canvas--line"></div>
                 </div>
@@ -330,7 +339,7 @@
 import * as echarts from 'echarts'
 import { markRaw } from 'vue'
 import Screenfull from '@/components/Screenfull'
-import { getXgjOrderRiskSummary, getXgjOverviewMetrics, getXgjPayOrderTrend, getXgjProductStatusDistribution, getXgjStoreList, getXgjTopStoreRanking } from '@/api/dvd'
+import { getXgjDailyOrderAnalysis, getXgjOrderRiskSummary, getXgjOverviewMetrics, getXgjPayOrderTrend, getXgjProductStatusDistribution, getXgjShopOrderFlow, getXgjStoreList, getXgjTopStoreRanking } from '@/api/dvd'
 
 const SCREEN_DESIGN_WIDTH = 1920
 const SCREEN_DESIGN_HEIGHT = 1080
@@ -345,6 +354,30 @@ const OVERVIEW_METRICS = [
 const createEmptyPayOrderTrend = () => ({
   labels: Array.from({ length: 24 }, (_item, hour) => `${String(hour).padStart(2, '0')}:00`),
   values: Array.from({ length: 24 }, () => 0)
+})
+
+const formatDateInputValue = dateValue => {
+  const current = new Date(dateValue)
+  const year = current.getFullYear()
+  const month = String(current.getMonth() + 1).padStart(2, '0')
+  const day = String(current.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const getRelativeDateValue = offsetDays => {
+  const current = new Date()
+  current.setDate(current.getDate() + offsetDays)
+  return formatDateInputValue(current)
+}
+
+const createEmptyDailyOrderAnalysis = () => ({
+  dates: [],
+  orderNumSeries: [],
+  payAmountSeries: [],
+  refundOrderNumSeries: [],
+  refundAmountSeries: [],
+  closedOrderNumSeries: [],
+  closedAmountSeries: []
 })
 
 const PROJECT_METRIC = {
@@ -453,13 +486,17 @@ const buildProductDistributionFromStats = (stats = []) => {
   })
 }
 
-const WORKFLOW_NODES = [
-  { label: '线索发现', icon: '线', count: 50, amount: '¥25k', left: '0px', top: '0px' },
-  { label: '咨询沟通', icon: '询', count: 300, amount: '¥150k', left: '190px', top: '0px', accent: true },
-  { label: '下单支付', icon: '单', count: 800, amount: '¥400k', left: '380px', top: '0px', accent: true },
-  { label: '发货签收', icon: '货', count: 700, amount: '¥350k', left: '570px', top: '0px' },
-  { label: '交易关闭/退款', icon: '退', count: 100, amount: '¥50k', left: '500px', top: '92px', width: '152px', accent: true }
-]
+const createEmptyShopOrderFlow = () => ({
+  pendingPaymentNum: 0,
+  waitSendNum: 0,
+  shippedNum: 0,
+  pendingAfterSaleNum: 0,
+  aboutToTimeoutNum: 0,
+  sellerPendingNum: 0,
+  buyerPendingNum: 0,
+  todayLatestCollectTime: '',
+  refundLatestCollectTime: ''
+})
 
 const RISK_METRIC = {
   value: '0%',
@@ -478,6 +515,8 @@ const formatWarningIndex = (closedOrderNum, allOrderNum) => {
   if (!total) return '0%'
   return `${((closed / total) * 100).toFixed(2).replace(/\.?0+$/, '')}%`
 }
+
+const formatFlowNumber = value => Number(value || 0).toLocaleString('zh-CN')
 
 export default {
   name: 'DvdXgjDashboard',
@@ -502,13 +541,16 @@ export default {
         selectedShop: 'all',
         selectedRankingSort: 'amount',
         selectedDate: AVAILABLE_DATES[AVAILABLE_DATES.length - 1],
+        analysisStartDate: getRelativeDateValue(-6),
+        analysisEndDate: getRelativeDateValue(0),
         storeList: [],
         overviewMetrics: OVERVIEW_METRICS,
         payOrderTrend: createEmptyPayOrderTrend(),
+        dailyOrderAnalysis: createEmptyDailyOrderAnalysis(),
       projectMetric: PROJECT_METRIC,
       rightsShopData: RIGHTS_SHOP_DATA,
       productDistribution: createEmptyProductDistribution(),
-        workflowNodes: WORKFLOW_NODES,
+        shopOrderFlow: createEmptyShopOrderFlow(),
         rankingList: [],
         riskMetric: RISK_METRIC,
         availableDates: AVAILABLE_DATES
@@ -527,23 +569,72 @@ export default {
         this.storeList.map(item => ({ label: item.storeName, value: item.storeName }))
       )
     },
-    currentTrendPayload() {
-      const fallbackDate = this.availableDates.includes(this.selectedDate)
-        ? this.selectedDate
-        : this.availableDates[this.availableDates.length - 1]
-      const current = RIGHTS_TREND_DATA[fallbackDate]
-      const seriesName = this.selectedShop !== 'all' && current.series[this.selectedShop]
-        ? this.selectedShop
-        : 'all'
-
-      return {
-        labels: current.labels,
-        seriesName: seriesName === 'all' ? '全部店铺' : seriesName,
-        values: current.series[seriesName]
-      }
-    },
     totalProducts() {
       return this.productDistribution.reduce((total, item) => total + item.value, 0)
+    },
+    shopOrderPrimaryNodes() {
+      return [
+        {
+          key: 'pendingPaymentNum',
+          label: '待付款',
+          icon: '付',
+          value: formatFlowNumber(this.shopOrderFlow.pendingPaymentNum),
+          desc: '待完成支付',
+          tone: 'warning'
+        },
+        {
+          key: 'waitSendNum',
+          label: '待发货',
+          icon: '发',
+          value: formatFlowNumber(this.shopOrderFlow.waitSendNum),
+          desc: '待商家发货',
+          tone: 'gold'
+        },
+        {
+          key: 'shippedNum',
+          label: '已发货',
+          icon: '货',
+          value: formatFlowNumber(this.shopOrderFlow.shippedNum),
+          desc: '订单已发出',
+          tone: 'cyan'
+        },
+        {
+          key: 'pendingAfterSaleNum',
+          label: '待售后',
+          icon: '后',
+          value: formatFlowNumber(this.shopOrderFlow.pendingAfterSaleNum),
+          desc: '待处理售后',
+          tone: 'accent'
+        }
+      ]
+    },
+    shopOrderRefundNodes() {
+      return [
+        {
+          key: 'aboutToTimeoutNum',
+          label: '24小时内即将超时',
+          icon: '时',
+          value: formatFlowNumber(this.shopOrderFlow.aboutToTimeoutNum),
+          desc: '需优先关注',
+          tone: 'warning'
+        },
+        {
+          key: 'sellerPendingNum',
+          label: '待商家处理',
+          icon: '商',
+          value: formatFlowNumber(this.shopOrderFlow.sellerPendingNum),
+          desc: '等待商家响应',
+          tone: 'accent'
+        },
+        {
+          key: 'buyerPendingNum',
+          label: '待买家处理',
+          icon: '买',
+          value: formatFlowNumber(this.shopOrderFlow.buyerPendingNum),
+          desc: '等待买家确认',
+          tone: 'cyan'
+        }
+      ]
     }
   },
   mounted() {
@@ -552,7 +643,9 @@ export default {
       this.fetchStoreList()
       this.fetchOverviewMetrics()
       this.fetchPayOrderTrend()
+      this.fetchDailyOrderAnalysis()
       this.fetchProductStatusDistribution()
+      this.fetchShopOrderFlow()
       this.fetchTopStoreRanking()
       this.fetchOrderRiskSummary()
       this.$nextTick(() => {
@@ -592,6 +685,23 @@ export default {
       }
       return {}
     },
+    getDailyOrderAnalysisQuery() {
+      const query = this.getProductStatusQuery()
+      let startDate = this.analysisStartDate
+      let endDate = this.analysisEndDate
+
+      if (startDate && endDate && startDate > endDate) {
+        const tempDate = startDate
+        startDate = endDate
+        endDate = tempDate
+        this.analysisStartDate = startDate
+        this.analysisEndDate = endDate
+      }
+
+      if (startDate) query.start_date = startDate
+      if (endDate) query.end_date = endDate
+      return query
+    },
     async fetchOverviewMetrics() {
       try {
         const res = await getXgjOverviewMetrics(this.getProductStatusQuery())
@@ -617,6 +727,23 @@ export default {
         this.renderPayOrderTrendChart()
       })
     },
+    async fetchDailyOrderAnalysis() {
+      try {
+        const res = await getXgjDailyOrderAnalysis(this.getDailyOrderAnalysisQuery())
+        this.dailyOrderAnalysis = {
+          ...createEmptyDailyOrderAnalysis(),
+          ...(res.data || {})
+        }
+      } catch (e) {
+        console.error('获取闲鱼经营数据日维度分析失败', e)
+        this.dailyOrderAnalysis = createEmptyDailyOrderAnalysis()
+      }
+
+      this.$nextTick(() => {
+        this.renderRightsBarChart()
+        this.renderRightsLineChart()
+      })
+    },
     async fetchProductStatusDistribution() {
       try {
         const res = await getXgjProductStatusDistribution(this.getProductStatusQuery())
@@ -629,6 +756,18 @@ export default {
       this.$nextTick(() => {
         this.renderPieChart()
       })
+    },
+    async fetchShopOrderFlow() {
+      try {
+        const res = await getXgjShopOrderFlow(this.getProductStatusQuery())
+        this.shopOrderFlow = {
+          ...createEmptyShopOrderFlow(),
+          ...(res.data || {})
+        }
+      } catch (e) {
+        console.error('获取闲鱼店铺订单流转数据失败', e)
+        this.shopOrderFlow = createEmptyShopOrderFlow()
+      }
     },
     async fetchTopStoreRanking() {
       try {
@@ -706,6 +845,10 @@ export default {
       if (widthScale > heightScale) {
         this.viewportWidth = Math.round(clientWidth / this.screenScale)
       }
+
+      if (widthScale > heightScale) {
+        this.viewportWidth = Math.round(clientWidth / this.screenScale)
+      }
     },
     initResizeObserver() {
       if (typeof ResizeObserver === 'undefined') return
@@ -734,10 +877,11 @@ export default {
       }
       this.fetchOverviewMetrics()
       this.fetchPayOrderTrend()
+      this.fetchDailyOrderAnalysis()
       this.fetchProductStatusDistribution()
+      this.fetchShopOrderFlow()
       this.fetchTopStoreRanking()
       this.fetchOrderRiskSummary()
-      this.renderRightsLineChart()
     },
     handleRankingSortChange(sortBy) {
       if (this.selectedRankingSort === sortBy) return
@@ -829,42 +973,86 @@ export default {
       if (!chartDom) return
       if (this.rightsBarInstance) this.rightsBarInstance.dispose()
       this.rightsBarInstance = markRaw(echarts.init(chartDom))
+      this.renderRightsBarChart()
+    },
+    renderRightsBarChart() {
+      if (!this.rightsBarInstance) return
       this.rightsBarInstance.setOption({
         backgroundColor: 'transparent',
-        grid: { left: 38, right: 14, top: 16, bottom: 28 },
+        grid: { left: 38, right: 52, top: 16, bottom: 28, containLabel: true },
         tooltip: {
           trigger: 'axis',
-          axisPointer: { type: 'shadow' },
+          axisPointer: { type: 'cross' },
           backgroundColor: 'rgba(8, 18, 38, 0.95)',
           borderColor: 'rgba(245, 199, 103, 0.25)',
-          textStyle: { color: '#f7f1d2' }
+          textStyle: { color: '#f7f1d2' },
+          formatter: params => {
+            const rows = params || []
+            const dateLabel = rows[0]?.axisValue || ''
+            const lines = rows.map(item => `${item.marker}${item.seriesName}：${Number(item.data || 0).toLocaleString('zh-CN')}`)
+            return [dateLabel].concat(lines).join('<br/>')
+          }
         },
         xAxis: {
           type: 'category',
-          data: this.rightsShopData.map(item => item.name),
+          data: this.dailyOrderAnalysis.dates,
           axisLine: { lineStyle: { color: 'rgba(245, 199, 103, 0.24)' } },
           axisTick: { show: false },
-          axisLabel: { color: '#cfc6a5', fontSize: 10, interval: 0 }
-        },
-        yAxis: {
-          type: 'value',
-          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
-          axisLine: { show: false },
-          axisTick: { show: false },
-          axisLabel: { color: '#a9a086', fontSize: 10 }
-        },
-        series: [{
-          type: 'bar',
-          data: this.rightsShopData.map(item => item.count),
-          barWidth: 18,
-          itemStyle: {
-            borderRadius: [6, 6, 0, 0],
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#ffd95d' },
-              { offset: 1, color: '#8fd8d8' }
-            ])
+          axisLabel: {
+            color: '#cfc6a5',
+            fontSize: 10,
+            interval: 0,
+            rotate: this.dailyOrderAnalysis.dates.length > 7 ? 25 : 0
           }
-        }]
+        },
+        yAxis: [
+          {
+            type: 'value',
+            name: '订单数量',
+            splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
+            axisLine: { show: false },
+            axisTick: { show: false },
+            axisLabel: { color: '#a9a086', fontSize: 10 }
+          },
+          {
+            type: 'value',
+            name: '支付金额',
+            splitLine: { show: false },
+            axisLine: { show: false },
+            axisTick: { show: false },
+            axisLabel: {
+              color: '#a9a086',
+              fontSize: 10,
+              formatter: value => `¥${Number(value || 0).toLocaleString('zh-CN')}`
+            }
+          }
+        ],
+        series: [
+          {
+            name: '订单数量',
+            type: 'bar',
+            data: this.dailyOrderAnalysis.orderNumSeries,
+            barWidth: 18,
+            itemStyle: {
+              borderRadius: [6, 6, 0, 0],
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#ffd95d' },
+                { offset: 1, color: '#8fd8d8' }
+              ])
+            }
+          },
+          {
+            name: '支付金额',
+            type: 'line',
+            yAxisIndex: 1,
+            smooth: true,
+            data: this.dailyOrderAnalysis.payAmountSeries,
+            symbol: 'circle',
+            symbolSize: 6,
+            lineStyle: { width: 3, color: '#6bd8ff' },
+            itemStyle: { color: '#6bd8ff', borderColor: '#0b1830', borderWidth: 2 }
+          }
+        ]
       })
     },
     initRightsLineChart() {
@@ -876,47 +1064,93 @@ export default {
     },
     renderRightsLineChart() {
       if (!this.rightsLineInstance) return
-      const current = this.currentTrendPayload
       this.rightsLineInstance.setOption({
         backgroundColor: 'transparent',
-        grid: { left: 34, right: 18, top: 16, bottom: 28 },
+        grid: { left: 34, right: 52, top: 16, bottom: 28, containLabel: true },
         tooltip: {
           trigger: 'axis',
           backgroundColor: 'rgba(8, 18, 38, 0.95)',
           borderColor: 'rgba(245, 199, 103, 0.25)',
-          textStyle: { color: '#f7f1d2' }
+          textStyle: { color: '#f7f1d2' },
+          formatter: params => {
+            const rows = params || []
+            const dateLabel = rows[0]?.axisValue || ''
+            const lines = rows.map(item => `${item.marker}${item.seriesName}：${Number(item.data || 0).toLocaleString('zh-CN')}`)
+            return [dateLabel].concat(lines).join('<br/>')
+          }
         },
         xAxis: {
           type: 'category',
-          data: current.labels,
-          boundaryGap: false,
+          data: this.dailyOrderAnalysis.dates,
           axisLine: { lineStyle: { color: 'rgba(245, 199, 103, 0.24)' } },
           axisTick: { show: false },
-          axisLabel: { color: '#cfc6a5', fontSize: 10 }
-        },
-        yAxis: {
-          type: 'value',
-          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
-          axisLine: { show: false },
-          axisTick: { show: false },
-          axisLabel: { color: '#a9a086', fontSize: 10 }
-        },
-        series: [{
-          name: current.seriesName,
-          type: 'line',
-          smooth: true,
-          data: current.values,
-          symbol: 'circle',
-          symbolSize: 7,
-          lineStyle: { width: 3, color: '#ffd95d' },
-          itemStyle: { color: '#ffd95d', borderColor: '#0b1830', borderWidth: 2 },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(255, 217, 93, 0.28)' },
-              { offset: 1, color: 'rgba(255, 217, 93, 0.02)' }
-            ])
+          axisLabel: {
+            color: '#cfc6a5',
+            fontSize: 10,
+            interval: 0,
+            rotate: this.dailyOrderAnalysis.dates.length > 7 ? 25 : 0
           }
-        }]
+        },
+        yAxis: [
+          {
+            type: 'value',
+            name: '数量',
+            splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
+            axisLine: { show: false },
+            axisTick: { show: false },
+            axisLabel: { color: '#a9a086', fontSize: 10 }
+          },
+          {
+            type: 'value',
+            name: '金额',
+            splitLine: { show: false },
+            axisLine: { show: false },
+            axisTick: { show: false },
+            axisLabel: {
+              color: '#a9a086',
+              fontSize: 10,
+              formatter: value => `¥${Number(value || 0).toLocaleString('zh-CN')}`
+            }
+          }
+        ],
+        series: [
+          {
+            name: '已经退款数量',
+            type: 'bar',
+            data: this.dailyOrderAnalysis.refundOrderNumSeries,
+            barMaxWidth: 14,
+            itemStyle: { color: '#ffb85c', borderRadius: [5, 5, 0, 0] }
+          },
+          {
+            name: '交易关闭数量',
+            type: 'bar',
+            data: this.dailyOrderAnalysis.closedOrderNumSeries,
+            barMaxWidth: 14,
+            itemStyle: { color: '#ff7e79', borderRadius: [5, 5, 0, 0] }
+          },
+          {
+            name: '已经退款金额',
+            type: 'line',
+            yAxisIndex: 1,
+            smooth: true,
+            data: this.dailyOrderAnalysis.refundAmountSeries,
+            symbol: 'circle',
+            symbolSize: 5,
+            lineStyle: { width: 2.5, color: '#7fe1ff' },
+            itemStyle: { color: '#7fe1ff', borderColor: '#0b1830', borderWidth: 2 }
+          },
+          {
+            name: '交易关闭金额',
+            type: 'line',
+            yAxisIndex: 1,
+            smooth: true,
+            data: this.dailyOrderAnalysis.closedAmountSeries,
+            symbol: 'circle',
+            symbolSize: 5,
+            lineStyle: { width: 2.5, color: '#ffd95d' },
+            itemStyle: { color: '#ffd95d', borderColor: '#0b1830', borderWidth: 2 }
+          }
+        ]
       })
     },
     initPieChart() {
@@ -993,7 +1227,7 @@ export default {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 28px 32px 18px;
+  padding: 10px 32px 18px;
   color: #fff;
   background:
     radial-gradient(circle at 50% -10%, rgba(255, 218, 0, 0.15) 0%, transparent 40%),
@@ -1098,7 +1332,7 @@ export default {
 
 .title-wrapper {
   position: absolute;
-  top: 8px;
+  top: 4px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 3;
@@ -1144,7 +1378,7 @@ export default {
 
 .header-controls {
   position: absolute;
-  top: 14px;
+  top: 10px;
   right: 0;
   z-index: 4;
   display: flex;
@@ -1249,7 +1483,7 @@ export default {
 
 .center-column {
   display: grid;
-  grid-template-rows: 260px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 4fr) minmax(0, 6fr);
 }
 
 .right-column {
@@ -1283,6 +1517,11 @@ export default {
   padding: 14px 14px 12px;
 }
 
+.rights-panel {
+  display: flex;
+  flex-direction: column;
+}
+
 .mobile-panel::before,
 .insight-panel::before,
 .overview-panel::before {
@@ -1306,6 +1545,20 @@ export default {
   color: #f8f2d0;
   font-size: 15px;
   font-weight: 700;
+}
+
+.panel-title-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.panel-title-row .panel-title {
+  margin-bottom: 0;
 }
 
 .section-title::before,
@@ -1503,43 +1756,172 @@ export default {
   line-height: 1.5;
 }
 
-.workflow-board {
+.panel-title-row--workflow {
+  align-items: flex-start;
+}
+
+.workflow-time-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.workflow-time-badge {
+  padding: 4px 9px;
+  border: 1px solid rgba(245, 199, 103, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(247, 239, 203, 0.72);
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.shop-flow-board {
   position: relative;
-  height: 196px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.workflow-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.workflow-link {
-  fill: none;
-  stroke: rgba(255, 218, 0, 0.6);
-  stroke-width: 2.4;
-}
-
-.workflow-node {
-  position: absolute;
-  padding: 12px 12px 10px;
-  border: 1px solid rgba(255, 218, 0, 0.2);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(9, 23, 48, 0.92) 0%, rgba(6, 17, 39, 0.95) 100%);
+.shop-flow-section {
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(245, 199, 103, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 247, 215, 0.05) 0%, rgba(255, 247, 215, 0) 24%),
+    linear-gradient(180deg, rgba(10, 23, 44, 0.86) 0%, rgba(7, 18, 36, 0.92) 100%);
   box-shadow:
     inset 0 0 18px rgba(255, 215, 0, 0.04),
-    0 10px 24px rgba(0, 0, 0, 0.24);
+    0 12px 28px rgba(0, 0, 0, 0.16);
 }
 
-.workflow-node--accent {
-  border-color: rgba(255, 218, 0, 0.4);
+.shop-flow-section--secondary {
+  border-color: rgba(113, 204, 255, 0.14);
+  padding: 10px 12px;
+}
+
+.shop-flow-section--primary {
+  padding: 10px 12px;
+}
+
+.shop-flow-section--primary .shop-flow-section-title {
+  margin-bottom: 10px;
+}
+
+.shop-flow-section--primary .shop-flow-card {
+  min-height: 90px;
+  padding: 8px 12px;
+}
+
+.shop-flow-section--primary .shop-flow-card-value {
+  margin-top: 10px;
+  font-size: 24px;
+}
+
+.shop-flow-section--primary .shop-flow-card-desc {
+  margin-top: 6px;
+}
+
+.shop-flow-section--secondary .shop-flow-section-title {
+  margin-bottom: 10px;
+}
+
+.shop-flow-section--secondary .shop-flow-card {
+  min-height: 88px;
+  padding: 8px 12px;
+}
+
+.shop-flow-section--secondary .shop-flow-card-value {
+  margin-top: 10px;
+  font-size: 24px;
+}
+
+.shop-flow-section--secondary .shop-flow-card-desc {
+  margin-top: 6px;
+}
+
+.shop-flow-section-title {
+  margin-bottom: 12px;
+  color: #f5e7ad;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.shop-flow-track {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) 26px minmax(0, 1fr) 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 0;
+}
+
+.shop-flow-track--secondary {
+  grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) 26px minmax(0, 1fr);
+}
+
+.shop-flow-arrow {
+  position: relative;
+  height: 2px;
+  margin: 0 4px;
+  background: linear-gradient(90deg, rgba(255, 218, 0, 0.12) 0%, rgba(255, 218, 0, 0.72) 100%);
+}
+
+.shop-flow-arrow::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -1px;
+  width: 9px;
+  height: 9px;
+  border-top: 2px solid rgba(255, 218, 0, 0.88);
+  border-right: 2px solid rgba(255, 218, 0, 0.88);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.shop-flow-arrow--secondary {
+  background: linear-gradient(90deg, rgba(113, 204, 255, 0.12) 0%, rgba(113, 204, 255, 0.72) 100%);
+}
+
+.shop-flow-arrow--secondary::after {
+  border-top-color: rgba(113, 204, 255, 0.88);
+  border-right-color: rgba(113, 204, 255, 0.88);
+}
+
+.shop-flow-card {
+  min-height: 98px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%),
+    rgba(8, 18, 38, 0.9);
   box-shadow:
-    inset 0 0 22px rgba(255, 215, 0, 0.08),
-    0 0 18px rgba(245, 199, 103, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 20px rgba(0, 0, 0, 0.18);
 }
 
-.workflow-node-head {
+.shop-flow-card--gold {
+  border-color: rgba(255, 218, 0, 0.24);
+}
+
+.shop-flow-card--warning {
+  border-color: rgba(255, 150, 92, 0.28);
+}
+
+.shop-flow-card--cyan {
+  border-color: rgba(113, 204, 255, 0.24);
+}
+
+.shop-flow-card--accent {
+  border-color: rgba(194, 143, 27, 0.28);
+}
+
+.shop-flow-card-head {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1548,30 +1930,30 @@ export default {
   font-weight: 600;
 }
 
-.workflow-node-icon {
-  width: 22px;
-  height: 22px;
+.shop-flow-card-icon {
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 7px;
-  background: rgba(255, 218, 0, 0.12);
-  color: #ffda00;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffde72;
   font-size: 12px;
   font-weight: 700;
 }
 
-.workflow-node-count {
-  margin-top: 10px;
-  color: #ffe27e;
+.shop-flow-card-value {
+  margin-top: 12px;
+  color: #fff0a6;
   font-size: 26px;
   font-weight: 700;
   line-height: 1;
 }
 
-.workflow-node-value {
-  margin-top: 6px;
-  color: rgba(242, 231, 187, 0.72);
+.shop-flow-card-desc {
+  margin-top: 8px;
+  color: rgba(242, 231, 187, 0.7);
   font-size: 12px;
 }
 
@@ -1579,9 +1961,10 @@ export default {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-rows: 184px minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 14px;
-  height: calc(100% - 34px);
+  flex: 1;
+  min-height: 0;
 }
 
 .chart-monitor-block {
@@ -1614,6 +1997,11 @@ export default {
   gap: 8px;
 }
 
+.chart-filter-row--panel {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .chart-filter {
   min-width: 118px;
   height: 32px;
@@ -1625,17 +2013,34 @@ export default {
   outline: none;
 }
 
+.chart-filter-button {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid rgba(245, 199, 103, 0.28);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255, 217, 93, 0.2) 0%, rgba(194, 143, 27, 0.2) 100%);
+  color: #fff3c4;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chart-filter-button:hover {
+  border-color: rgba(245, 199, 103, 0.45);
+  box-shadow: 0 0 12px rgba(245, 199, 103, 0.14);
+}
+
 .chart-canvas {
   width: 100%;
 }
 
 .chart-canvas--bar {
-  height: 136px;
+  height: calc(100% - 40px);
+  min-height: 124px;
 }
 
 .chart-canvas--line {
   height: calc(100% - 40px);
-  min-height: 220px;
+  min-height: 124px;
 }
 
 .distribution-layout {
@@ -1816,7 +2221,7 @@ export default {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 6px;
+  padding-right: 12px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 218, 0, 0.45) transparent;
 }

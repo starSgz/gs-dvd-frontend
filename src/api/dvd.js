@@ -62,7 +62,7 @@ export function getStoreList() {
   })
 }
 
-// 获取实时指标 (GMV, 订单量, 商品访问量等)
+// 获取实时指标
 export function getRealtimeMetrics(query) {
   return request({
     url: '/dvd/qf/dashboard/realtime-metrics',
@@ -71,7 +71,7 @@ export function getRealtimeMetrics(query) {
   })
 }
 
-// 获取实时GMV走势
+// 获取实时 GMV 趋势
 export function getRealtimeTrend(query) {
   return request({
     url: '/dvd/qf/dashboard/realtime-trend',
@@ -80,7 +80,7 @@ export function getRealtimeTrend(query) {
   })
 }
 
-// 获取热销店铺TOP10
+// 获取热销店铺 TOP10
 export function getTopStores(query) {
   return request({
     url: '/dvd/qf/dashboard/top-stores',
@@ -98,7 +98,7 @@ export function getRealtimeOrders(query) {
   })
 }
 
-// 获取SKU销售数据
+// 获取 SKU 销售数据
 export function getSkuSalesData(query) {
   return request({
     url: '/dvd/qf/dashboard/sku-sales-data',
@@ -144,7 +144,7 @@ export function getDdHourlyTrend(query) {
   })
 }
 
-// 获取地图地理聚合订单数据（支付金额 + 订单数，支持省/市/区下钻）
+// 获取地图地理聚合订单数据
 export function getDdGeoOrderStats(query) {
   return request({
     url: '/dvd/dd/dashboard/geo-order-stats',
@@ -153,7 +153,7 @@ export function getDdGeoOrderStats(query) {
   })
 }
 
-// 获取抖店每日概览指标（支付金额、订单数、曝光等）
+// 获取抖店每日概览指标
 export function getDdDailyOverviewMetrics(query) {
   return request({
     url: '/dvd/dd/dashboard/daily/overview-metrics',
@@ -162,7 +162,7 @@ export function getDdDailyOverviewMetrics(query) {
   })
 }
 
-// 获取抖店每日订单列表（分页）
+// 获取抖店每日订单列表
 export function getDdDailyOrderList(query) {
   return request({
     url: '/dvd/dd/dashboard/daily/order-list',
@@ -171,7 +171,7 @@ export function getDdDailyOrderList(query) {
   })
 }
 
-// 获取商品曝光点击流量每日趋势（柱线混合图）
+// 获取商品曝光点击流量每日趋势
 export function getDdTrafficTrend(query) {
   return request({
     url: '/dvd/dd/dashboard/daily/traffic-trend',
@@ -180,7 +180,7 @@ export function getDdTrafficTrend(query) {
   })
 }
 
-// 获取账户余额与保证金数据（总金额、可提现金额、保证金余额等）
+// 获取账户余额与保证金数据
 export function getDdAccountBalance(query) {
   return request({
     url: '/dvd/dd/dashboard/account-balance',
@@ -189,7 +189,7 @@ export function getDdAccountBalance(query) {
   })
 }
 
-// 获取商品类目销售占比（商品名称 + 规格，玫瑰图）
+// 获取商品类目销售占比
 export function getDdCategoryStats(query) {
   return request({
     url: '/dvd/dd/dashboard/category-stats',
@@ -226,6 +226,15 @@ export function getXgjPayOrderTrend(query) {
   })
 }
 
+// 获取闲鱼经营数据日维度分析
+export function getXgjDailyOrderAnalysis(query) {
+  return request({
+    url: '/dvd/xgj/dashboard/daily-order-analysis',
+    method: 'get',
+    params: query
+  })
+}
+
 // 获取闲鱼商品状态分布
 export function getXgjProductStatusDistribution(query) {
   return request({
@@ -235,7 +244,7 @@ export function getXgjProductStatusDistribution(query) {
   })
 }
 
-// 获取闲鱼Top店铺排行
+// 获取闲鱼 Top 店铺排行
 export function getXgjTopStoreRanking(query) {
   return request({
     url: '/dvd/xgj/dashboard/top-store-ranking',
@@ -248,6 +257,15 @@ export function getXgjTopStoreRanking(query) {
 export function getXgjOrderRiskSummary(query) {
   return request({
     url: '/dvd/xgj/dashboard/order-risk-summary',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取闲鱼店铺订单流转数据
+export function getXgjShopOrderFlow(query) {
+  return request({
+    url: '/dvd/xgj/dashboard/shop-order-flow',
     method: 'get',
     params: query
   })
