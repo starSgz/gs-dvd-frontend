@@ -197,3 +197,31 @@ export function getDdCategoryStats(query) {
     params: query
   })
 }
+
+// ========== 闲鱼相关接口 ==========
+
+// 获取闲鱼店铺列表
+export function getXgjStoreList() {
+  return request({
+    url: '/dvd/xgj/dashboard/store-list',
+    method: 'get'
+  })
+}
+
+// 获取闲鱼商品状态分布
+export function getXgjProductStatusDistribution(query) {
+  return request({
+    url: '/dvd/xgj/dashboard/product-status-distribution',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取闲鱼Top店铺排行
+export function getXgjTopStoreRanking(query) {
+  return request({
+    url: '/dvd/xgj/dashboard/top-store-ranking',
+    method: 'get',
+    params: query
+  })
+}

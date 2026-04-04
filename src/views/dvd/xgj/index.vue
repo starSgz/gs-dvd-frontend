@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div ref="screenStageRef" class="screen-stage">
     <div class="screen-stage__viewport" :style="screenScaleStyle">
       <div class="dashboard-container">
@@ -14,7 +14,7 @@
                 </linearGradient>
             </defs>
         
-            <!-- 主曲线：两侧平稳过渡，中部下沉包裹标题 -->
+            <!-- 主线框：两侧平稳过渡，中部下沉包裹标题 -->
             <path d="M 0 8 
                      L 430 8
                      C 515 8, 562 22, 618 50
@@ -31,7 +31,7 @@
                  stroke-linecap="round"
                   fill="none" />
             
-            <!-- 阴影辅助线：贴近主线，增加层次 -->
+            <!-- 阴影辅助线：贴近主线，增强层次 -->
             <path d="M 82 18
                      L 458 18
                      C 536 18, 581 31, 635 57
@@ -48,7 +48,7 @@
                  stroke-linecap="round"
                   fill="none" />
 
-            <!-- 中央压线：让标题区域更像独立舱体 -->
+            <!-- 中央压边线：让标题区域更像独立载体 -->
             <path d="M 752 103 L 782 84 L 1138 84 L 1168 103"
                  stroke="rgba(255,218,0,0.28)"
                  stroke-width="1.2"
@@ -64,7 +64,7 @@
               <span class="main-title-icon">X</span>
               闲鱼实时经营分析大屏
             </h1>
-            <!-- <div class="header-subtitle">XGJ CHANNEL · {{ currentDateText }} · {{ currentTimeText }}</div> -->
+            <!-- <div class="header-subtitle">XGJ CHANNEL 路 {{ currentDateText }} 路 {{ currentTimeText }}</div> -->
           </div>
 
           <div class="header-controls">
@@ -197,7 +197,7 @@
               <div class="chart-monitor-panel">
                 <div class="chart-monitor-block chart-monitor-block--top">
                   <div class="chart-block-head">
-                    <div class="chart-block-title">店铺维权量对比</div>
+                      <div class="chart-block-title">店铺维权量对比</div>
                   </div>
                   <div ref="rightsBarChartRef" class="chart-canvas chart-canvas--bar"></div>
                 </div>
@@ -272,17 +272,24 @@
             </article>
 
             <article class="panel insight-panel ranking-panel">
-              <div class="panel-title">Top 店铺 / 采集排行</div>
+              <div class="panel-title">Top 店铺</div>
               <div class="ranking-list">
+                <div v-if="!rankingList.length" class="ranking-empty">暂无店铺数据</div>
                 <div
                   v-for="(item, index) in rankingList"
-                  :key="item"
+                  :key="item.storeId || item.name || index"
                   class="ranking-row"
                 >
                   <span class="ranking-badge" :class="rankBadgeClass(index)">
                     {{ index + 1 }}
                   </span>
-                  <span class="ranking-name">{{ item }}</span>
+                  <div class="ranking-content">
+                    <div class="ranking-name">{{ item.name }}</div>
+                    <div class="ranking-meta">
+                      <span>今日支付金额：{{ formatRankingAmount(item.payAmountToday) }}</span>
+                      <span>今日支付订单：{{ item.payOrderNumToday }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </article>
@@ -291,7 +298,7 @@
 
         <!-- <footer class="dashboard-footer">
           <span>Channel: XGJ_REALTIME_01</span>
-          <span>© 2026 XIANYU DATA OPERATIONS CENTER</span>
+          <span>漏 2026 XIANYU DATA OPERATIONS CENTER</span>
           <span>Build: v1.0.0-screen</span>
         </footer> -->
       </div>
@@ -303,6 +310,7 @@
 import * as echarts from 'echarts'
 import { markRaw } from 'vue'
 import Screenfull from '@/components/Screenfull'
+import { getXgjProductStatusDistribution, getXgjStoreList, getXgjTopStoreRanking } from '@/api/dvd'
 
 const SCREEN_DESIGN_WIDTH = 1920
 const SCREEN_DESIGN_HEIGHT = 1080
@@ -310,7 +318,7 @@ const SCREEN_DESIGN_HEIGHT = 1080
 const OVERVIEW_METRICS = [
   { label: '今日 GMV', symbol: '¥', value: '350,210', previous: '昨日: ¥320,100', trend: 'up', rate: '9.4%' },
   { label: '支付订单', symbol: '单', value: '1,250', previous: '昨日: 1,100', trend: 'up', rate: '13.6%' },
-  { label: '平均客单价', symbol: '客', unit: '¥', value: '280.17', previous: '昨日: ¥291.00', trend: 'down', rate: '3.7%' }
+  { label: '平均客单价', symbol: '均', unit: '¥', value: '280.17', previous: '昨日: ¥291.00', trend: 'down', rate: '3.7%' }
 ]
 
 const PROJECT_METRIC = {
@@ -319,15 +327,15 @@ const PROJECT_METRIC = {
   previous: '昨日: 105',
   trend: 'down',
   rate: '9.5%',
-  note: '重点项目仍在推进，处理效率保持稳定'
+  note: '重点项目仍在推进，处理效率保持稳定。'
 }
 
 const RIGHTS_SHOP_DATA = [
-  { name: '鱼小小精品', count: 18 },
-  { name: '潮流二手服饰', count: 14 },
-  { name: '拾光影音仓', count: 11 },
-  { name: '旧物研究所', count: 9 },
-  { name: '阿南精选好物', count: 7 }
+  { name: '店铺A', count: 18 },
+  { name: '店铺B', count: 14 },
+  { name: '店铺C', count: 11 },
+  { name: '店铺D', count: 9 },
+  { name: '店铺E', count: 7 }
 ]
 
 const RIGHTS_TREND_DATA = {
@@ -335,33 +343,33 @@ const RIGHTS_TREND_DATA = {
     labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
     series: {
       all: [6, 9, 13, 11, 15, 18],
-      鱼小小精品: [2, 3, 5, 4, 6, 7],
-      潮流二手服饰: [1, 2, 3, 3, 4, 5],
-      拾光影音仓: [1, 1, 2, 2, 3, 3],
-      旧物研究所: [1, 1, 2, 2, 2, 3],
-      阿南精选好物: [1, 2, 1, 1, 2, 2]
+      店铺A: [2, 3, 5, 4, 6, 7],
+      店铺B: [1, 2, 3, 3, 4, 5],
+      店铺C: [1, 1, 2, 2, 3, 3],
+      店铺D: [1, 1, 2, 2, 2, 3],
+      店铺E: [1, 2, 1, 1, 2, 2]
     }
   },
   '2026-03-31': {
     labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
     series: {
       all: [7, 10, 12, 14, 16, 21],
-      鱼小小精品: [2, 4, 4, 5, 6, 8],
-      潮流二手服饰: [2, 2, 3, 4, 4, 5],
-      拾光影音仓: [1, 2, 2, 2, 3, 4],
-      旧物研究所: [1, 2, 3, 3, 3, 4],
-      阿南精选好物: [1, 1, 1, 2, 2, 3]
+      店铺A: [2, 4, 4, 5, 6, 8],
+      店铺B: [2, 2, 3, 4, 4, 5],
+      店铺C: [1, 2, 2, 2, 3, 4],
+      店铺D: [1, 2, 3, 3, 3, 4],
+      店铺E: [1, 1, 1, 2, 2, 3]
     }
   },
   '2026-04-01': {
     labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
     series: {
       all: [8, 12, 15, 14, 19, 24],
-      鱼小小精品: [3, 4, 6, 5, 7, 9],
-      潮流二手服饰: [2, 3, 4, 4, 5, 6],
-      拾光影音仓: [1, 2, 2, 3, 3, 4],
-      旧物研究所: [1, 2, 3, 2, 4, 5],
-      阿南精选好物: [1, 1, 2, 2, 3, 3]
+      店铺A: [3, 4, 6, 5, 7, 9],
+      店铺B: [2, 3, 4, 4, 5, 6],
+      店铺C: [1, 2, 2, 3, 3, 4],
+      店铺D: [1, 2, 3, 2, 4, 5],
+      店铺E: [1, 1, 2, 2, 3, 3]
     }
   }
 }
@@ -369,11 +377,55 @@ const RIGHTS_TREND_DATA = {
 const AVAILABLE_DATES = Object.keys(RIGHTS_TREND_DATA).sort()
 
 const PRODUCT_DISTRIBUTION = [
-  { name: '出售中', value: 312, percent: '60%', color: '#ffd53f' },
+  { name: '销售中', value: 312, percent: '60%', color: '#ffd53f' },
   { name: '售出下架', value: 130, percent: '25%', color: '#f3edd8' },
-  { name: '抽奖中', value: 52, percent: '10%', color: '#89d9db' },
-  { name: '处理中/售后待核', value: 26, percent: '5%', color: '#3d6f77' }
+  { name: '拍卖中', value: 52, percent: '10%', color: '#89d9db' },
+  { name: '处理中', value: 26, percent: '5%', color: '#3d6f77' }
 ]
+
+const PRODUCT_STATUS_META = [
+  { key: 'waitPublishNum', name: '\u5f85\u53d1\u5e03', color: '#ffd53f' },
+  { key: 'sellingNum', name: '\u9500\u552e\u4e2d', color: '#f3edd8' },
+  { key: 'auctioningNum', name: '\u62cd\u5356\u4e2d', color: '#89d9db' },
+  { key: 'onSaleStockNum', name: '\u5728\u552e\u5e93\u5b58\u6570', color: '#4cb7ff' },
+  { key: 'soldOffShelfNum', name: '\u552e\u51fa\u4e0b\u67b6', color: '#5a8dee' },
+  { key: 'auctionOffShelfNum', name: '\u62cd\u5356\u4e0b\u67b6', color: '#6f7bf7' },
+  { key: 'afterSaleRestoreNum', name: '\u552e\u540e\u5f85\u6062\u590d', color: '#ff9b6b' },
+  { key: 'processingNum', name: '\u5904\u7406\u4e2d', color: '#3d6f77' }
+]
+
+const formatDistributionPercent = (value, total) => {
+  if (!total) return '0%'
+  const percent = (value / total) * 100
+  const precision = percent >= 10 ? 0 : 1
+  return `${percent.toFixed(precision).replace(/\.0$/, '')}%`
+}
+
+const createEmptyProductDistribution = () =>
+  PRODUCT_STATUS_META.map(item => ({
+    ...item,
+    value: 0,
+    percent: '0%'
+  }))
+
+const buildProductDistributionFromStats = (stats = []) => {
+  const valueMap = stats.reduce((accumulator, item) => {
+    if (!item || !item.key) return accumulator
+    accumulator[item.key] = Number(item.value || 0)
+    return accumulator
+  }, {})
+
+  const total = PRODUCT_STATUS_META.reduce((sum, item) => sum + Math.round(valueMap[item.key] || 0), 0)
+
+  return PRODUCT_STATUS_META.map(item => {
+    const value = Math.round(valueMap[item.key] || 0)
+    return {
+      ...item,
+      value,
+      percent: formatDistributionPercent(value, total)
+    }
+  })
+}
 
 const WORKFLOW_NODES = [
   { label: '线索发现', icon: '线', count: 50, amount: '¥25k', left: '0px', top: '0px' },
@@ -383,24 +435,16 @@ const WORKFLOW_NODES = [
   { label: '交易关闭/退款', icon: '退', count: 100, amount: '¥50k', left: '500px', top: '92px', width: '152px', accent: true }
 ]
 
-const RANKING_LIST = [
-  '鱼小小精品',
-  '潮流二手服饰',
-  '拾光影音仓',
-  '旧物研究所',
-  '阿南精选好物',
-  '数码流转仓',
-  '青木中古店',
-  '潮玩回收站',
-  '轻奢衣橱计划',
-  '城南闲置优选'
-]
-
 const RISK_METRIC = {
   value: 28,
   label: '风险指数 / 待处理退款',
-  trend: '↑232% vs. 昨日'
+  trend: '+32% vs. 昨日'
 }
+
+const formatRankingAmount = value => `¥${Number(value || 0).toLocaleString('zh-CN', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+})}`
 
 export default {
   name: 'DvdXgjDashboard',
@@ -424,15 +468,16 @@ export default {
       resizeTimeout: null,
       selectedShop: 'all',
       selectedDate: AVAILABLE_DATES[AVAILABLE_DATES.length - 1],
+      storeList: [],
       overviewMetrics: OVERVIEW_METRICS,
       projectMetric: PROJECT_METRIC,
       rightsShopData: RIGHTS_SHOP_DATA,
-      productDistribution: PRODUCT_DISTRIBUTION,
-      workflowNodes: WORKFLOW_NODES,
-      rankingList: RANKING_LIST,
-      riskMetric: RISK_METRIC,
-      availableDates: AVAILABLE_DATES
-    }
+      productDistribution: createEmptyProductDistribution(),
+        workflowNodes: WORKFLOW_NODES,
+        rankingList: [],
+        riskMetric: RISK_METRIC,
+        availableDates: AVAILABLE_DATES
+      }
   },
   computed: {
     screenScaleStyle() {
@@ -444,7 +489,7 @@ export default {
     },
     shopOptions() {
       return [{ label: '全部店铺', value: 'all' }].concat(
-        this.rightsShopData.map(item => ({ label: item.name, value: item.name }))
+        this.storeList.map(item => ({ label: item.storeName, value: item.storeName }))
       )
     },
     currentTrendPayload() {
@@ -466,12 +511,15 @@ export default {
       return this.productDistribution.reduce((total, item) => total + item.value, 0)
     }
   },
-  mounted() {
-    this.updateTime()
-    this.clockTimer = setInterval(this.updateTime, 1000)
-    this.$nextTick(() => {
-      this.initCharts()
-      this.handleResize()
+    mounted() {
+      this.updateTime()
+      this.clockTimer = setInterval(this.updateTime, 1000)
+      this.fetchStoreList()
+      this.fetchProductStatusDistribution()
+      this.fetchTopStoreRanking()
+      this.$nextTick(() => {
+        this.initCharts()
+        this.handleResize()
       this.initResizeObserver()
     })
     window.addEventListener('resize', this.handleResize)
@@ -492,6 +540,46 @@ export default {
     this.disposeCharts()
   },
   methods: {
+    async fetchStoreList() {
+      try {
+        const res = await getXgjStoreList()
+        this.storeList = res.data || []
+      } catch (e) {
+        console.error('获取闲鱼店铺列表失败', e)
+      }
+    },
+    getProductStatusQuery() {
+      if (this.selectedShop && this.selectedShop !== 'all') {
+        return { store_name: this.selectedShop }
+      }
+      return {}
+    },
+    async fetchProductStatusDistribution() {
+      try {
+        const res = await getXgjProductStatusDistribution(this.getProductStatusQuery())
+        this.productDistribution = buildProductDistributionFromStats(res.data?.stats || [])
+      } catch (e) {
+        console.error('获取闲鱼商品状态分布失败', e)
+        this.productDistribution = createEmptyProductDistribution()
+      }
+
+      this.$nextTick(() => {
+        this.renderPieChart()
+      })
+    },
+    async fetchTopStoreRanking() {
+      try {
+        const res = await getXgjTopStoreRanking({
+          ...this.getProductStatusQuery(),
+          limit: 100
+        })
+        this.rankingList = res.data?.items || []
+      } catch (e) {
+        console.error('获取闲鱼Top店铺排行失败', e)
+        this.rankingList = []
+      }
+    },
+    formatRankingAmount,
     updateTime() {
       const now = new Date()
       this.currentDateText = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`
@@ -564,6 +652,8 @@ export default {
       if (!this.selectedShop) {
         this.selectedShop = 'all'
       }
+      this.fetchProductStatusDistribution()
+      this.fetchTopStoreRanking()
       this.renderRightsLineChart()
     },
     rankBadgeClass(index) {
@@ -735,13 +825,20 @@ export default {
       if (!chartDom) return
       if (this.pieInstance) this.pieInstance.dispose()
       this.pieInstance = markRaw(echarts.init(chartDom))
+      this.renderPieChart()
+    },
+    renderPieChart() {
+      if (!this.pieInstance) return
       this.pieInstance.setOption({
         backgroundColor: 'transparent',
         tooltip: {
           trigger: 'item',
+          appendToBody: true,
+          confine: false,
           backgroundColor: 'rgba(8, 18, 38, 0.95)',
           borderColor: 'rgba(245, 199, 103, 0.25)',
-          textStyle: { color: '#f7f1d2' }
+          textStyle: { color: '#f7f1d2' },
+          extraCssText: 'z-index: 99999; pointer-events: none;'
         },
         series: [{
           type: 'pie',
@@ -1451,10 +1548,16 @@ export default {
   align-items: center;
 }
 
+.distribution-panel {
+  overflow: visible;
+  z-index: 3;
+}
+
 .donut-wrap {
   position: relative;
   width: 120px;
   height: 120px;
+  z-index: 4;
 }
 
 .donut-chart {
@@ -1564,17 +1667,51 @@ export default {
   letter-spacing: 0.08em;
 }
 
+.ranking-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .ranking-list {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 218, 0, 0.45) transparent;
+}
+
+.ranking-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ranking-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ranking-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 218, 0, 0.45);
+}
+
+.ranking-empty {
+  padding: 14px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(239, 230, 196, 0.65);
+  font-size: 12px;
+  text-align: center;
 }
 
 .ranking-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   padding: 9px 10px;
   border-radius: 10px;
@@ -1614,10 +1751,31 @@ export default {
   color: #ffda00;
 }
 
+.ranking-content {
+  flex: 1;
+  min-width: 0;
+}
+
 .ranking-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 600;
+}
+
+.ranking-meta {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: rgba(239, 230, 196, 0.78);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.ranking-meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dashboard-footer {
