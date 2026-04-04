@@ -208,6 +208,24 @@ export function getXgjStoreList() {
   })
 }
 
+// 获取闲鱼经营核心指标
+export function getXgjOverviewMetrics(query) {
+  return request({
+    url: '/dvd/xgj/dashboard/overview-metrics',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取闲鱼支付订单数小时走势图
+export function getXgjPayOrderTrend(query) {
+  return request({
+    url: '/dvd/xgj/dashboard/pay-order-trend',
+    method: 'get',
+    params: query
+  })
+}
+
 // 获取闲鱼商品状态分布
 export function getXgjProductStatusDistribution(query) {
   return request({
@@ -221,6 +239,15 @@ export function getXgjProductStatusDistribution(query) {
 export function getXgjTopStoreRanking(query) {
   return request({
     url: '/dvd/xgj/dashboard/top-store-ranking',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取闲鱼售后预警与监控摘要
+export function getXgjOrderRiskSummary(query) {
+  return request({
+    url: '/dvd/xgj/dashboard/order-risk-summary',
     method: 'get',
     params: query
   })

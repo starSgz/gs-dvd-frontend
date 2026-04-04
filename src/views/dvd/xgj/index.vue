@@ -121,15 +121,15 @@
 
               <div class="mobile-trend-card">
                 <div class="mobile-trend-head">
-                  <div class="mobile-trend-title">客单价走势</div>
-                  <div class="mobile-trend-note">近 24 小时均价波动</div>
+                  <div class="mobile-trend-title">支付订单数走势</div>
+                  <div class="mobile-trend-note">当日 0-23 点支付订单趋势</div>
                 </div>
-                <div ref="avgPriceTrendChartRef" class="mobile-trend-chart"></div>
+                <div ref="payOrderTrendChartRef" class="mobile-trend-chart"></div>
               </div>
             </article>
 
             <article class="panel mobile-panel stacked-panel project-mode-panel">
-              <div class="stacked-panel-layers" aria-hidden="true"></div>
+              <!-- <div class="stacked-panel-layers" aria-hidden="true"></div> -->
               <div class="section-title">专项项目监控</div>
               <div class="mobile-metric-stack">
                 <div class="mobile-metric-card highlight project-mode-card">
@@ -272,7 +272,27 @@
             </article>
 
             <article class="panel insight-panel ranking-panel">
-              <div class="panel-title">Top 店铺</div>
+              <div class="panel-title ranking-panel-title">
+                <span>Top 店铺</span>
+                <div class="ranking-sort-switch">
+                  <button
+                    type="button"
+                    class="ranking-sort-button"
+                    :class="{ 'is-active': selectedRankingSort === 'amount' }"
+                    @click="handleRankingSortChange('amount')"
+                  >
+                    今日支付金额
+                  </button>
+                  <button
+                    type="button"
+                    class="ranking-sort-button"
+                    :class="{ 'is-active': selectedRankingSort === 'orders' }"
+                    @click="handleRankingSortChange('orders')"
+                  >
+                    今日支付订单
+                  </button>
+                </div>
+              </div>
               <div class="ranking-list">
                 <div v-if="!rankingList.length" class="ranking-empty">暂无店铺数据</div>
                 <div
@@ -310,16 +330,22 @@
 import * as echarts from 'echarts'
 import { markRaw } from 'vue'
 import Screenfull from '@/components/Screenfull'
-import { getXgjProductStatusDistribution, getXgjStoreList, getXgjTopStoreRanking } from '@/api/dvd'
+import { getXgjOrderRiskSummary, getXgjOverviewMetrics, getXgjPayOrderTrend, getXgjProductStatusDistribution, getXgjStoreList, getXgjTopStoreRanking } from '@/api/dvd'
 
 const SCREEN_DESIGN_WIDTH = 1920
 const SCREEN_DESIGN_HEIGHT = 1080
 
 const OVERVIEW_METRICS = [
-  { label: '今日 GMV', symbol: '¥', value: '350,210', previous: '昨日: ¥320,100', trend: 'up', rate: '9.4%' },
-  { label: '支付订单', symbol: '单', value: '1,250', previous: '昨日: 1,100', trend: 'up', rate: '13.6%' },
-  { label: '平均客单价', symbol: '均', unit: '¥', value: '280.17', previous: '昨日: ¥291.00', trend: 'down', rate: '3.7%' }
+  { label: '支付金额', symbol: '¥', unit: '¥', value: '0.00', previous: '昨日: ¥0.00', trend: 'flat', rate: '0%' },
+  { label: '支付订单数', symbol: '单', value: '0', previous: '昨日: 0', trend: 'flat', rate: '0%' },
+  { label: '支付客单价', symbol: '均', unit: '¥', value: '0.00', previous: '昨日: ¥0.00', trend: 'flat', rate: '0%' },
+  { label: '新发布商品', symbol: '新', value: '0', previous: '昨日: 0', trend: 'flat', rate: '0%' }
 ]
+
+const createEmptyPayOrderTrend = () => ({
+  labels: Array.from({ length: 24 }, (_item, hour) => `${String(hour).padStart(2, '0')}:00`),
+  values: Array.from({ length: 24 }, () => 0)
+})
 
 const PROJECT_METRIC = {
   label: '项目进行中',
@@ -436,9 +462,9 @@ const WORKFLOW_NODES = [
 ]
 
 const RISK_METRIC = {
-  value: 28,
-  label: '风险指数 / 待处理退款',
-  trend: '+32% vs. 昨日'
+  value: '0%',
+  label: '预警指数',
+  trend: '交易关闭数量/所有订单数量'
 }
 
 const formatRankingAmount = value => `¥${Number(value || 0).toLocaleString('zh-CN', {
@@ -446,11 +472,18 @@ const formatRankingAmount = value => `¥${Number(value || 0).toLocaleString('zh-
   maximumFractionDigits: 2
 })}`
 
+const formatWarningIndex = (closedOrderNum, allOrderNum) => {
+  const closed = Number(closedOrderNum || 0)
+  const total = Number(allOrderNum || 0)
+  if (!total) return '0%'
+  return `${((closed / total) * 100).toFixed(2).replace(/\.?0+$/, '')}%`
+}
+
 export default {
   name: 'DvdXgjDashboard',
   components: { Screenfull },
   beforeCreate() {
-    this.avgPriceTrendInstance = null
+    this.payOrderTrendInstance = null
     this.rightsBarInstance = null
     this.rightsLineInstance = null
     this.pieInstance = null
@@ -462,14 +495,16 @@ export default {
       screenScale: 1,
       viewportWidth: SCREEN_DESIGN_WIDTH,
       viewportHeight: SCREEN_DESIGN_HEIGHT,
-      isImmersiveMode: false,
-      clockTimer: null,
-      resizeObserver: null,
-      resizeTimeout: null,
-      selectedShop: 'all',
-      selectedDate: AVAILABLE_DATES[AVAILABLE_DATES.length - 1],
-      storeList: [],
-      overviewMetrics: OVERVIEW_METRICS,
+        isImmersiveMode: false,
+        clockTimer: null,
+        resizeObserver: null,
+        resizeTimeout: null,
+        selectedShop: 'all',
+        selectedRankingSort: 'amount',
+        selectedDate: AVAILABLE_DATES[AVAILABLE_DATES.length - 1],
+        storeList: [],
+        overviewMetrics: OVERVIEW_METRICS,
+        payOrderTrend: createEmptyPayOrderTrend(),
       projectMetric: PROJECT_METRIC,
       rightsShopData: RIGHTS_SHOP_DATA,
       productDistribution: createEmptyProductDistribution(),
@@ -511,12 +546,15 @@ export default {
       return this.productDistribution.reduce((total, item) => total + item.value, 0)
     }
   },
-    mounted() {
+  mounted() {
       this.updateTime()
       this.clockTimer = setInterval(this.updateTime, 1000)
       this.fetchStoreList()
+      this.fetchOverviewMetrics()
+      this.fetchPayOrderTrend()
       this.fetchProductStatusDistribution()
       this.fetchTopStoreRanking()
+      this.fetchOrderRiskSummary()
       this.$nextTick(() => {
         this.initCharts()
         this.handleResize()
@@ -554,6 +592,31 @@ export default {
       }
       return {}
     },
+    async fetchOverviewMetrics() {
+      try {
+        const res = await getXgjOverviewMetrics(this.getProductStatusQuery())
+        this.overviewMetrics = res.data?.metrics || OVERVIEW_METRICS
+      } catch (e) {
+        console.error('获取闲鱼经营核心指标失败', e)
+        this.overviewMetrics = OVERVIEW_METRICS
+      }
+    },
+    async fetchPayOrderTrend() {
+      try {
+        const res = await getXgjPayOrderTrend(this.getProductStatusQuery())
+        this.payOrderTrend = {
+          labels: res.data?.labels || createEmptyPayOrderTrend().labels,
+          values: res.data?.values || createEmptyPayOrderTrend().values
+        }
+      } catch (e) {
+        console.error('获取闲鱼支付订单数小时走势图失败', e)
+        this.payOrderTrend = createEmptyPayOrderTrend()
+      }
+
+      this.$nextTick(() => {
+        this.renderPayOrderTrendChart()
+      })
+    },
     async fetchProductStatusDistribution() {
       try {
         const res = await getXgjProductStatusDistribution(this.getProductStatusQuery())
@@ -571,12 +634,29 @@ export default {
       try {
         const res = await getXgjTopStoreRanking({
           ...this.getProductStatusQuery(),
+          sort_by: this.selectedRankingSort,
           limit: 100
         })
         this.rankingList = res.data?.items || []
       } catch (e) {
         console.error('获取闲鱼Top店铺排行失败', e)
         this.rankingList = []
+      }
+    },
+    async fetchOrderRiskSummary() {
+      try {
+        const res = await getXgjOrderRiskSummary(this.getProductStatusQuery())
+        const data = res.data || {}
+        const allOrderNum = Number(data.allOrderNum || 0)
+        const closedOrderNum = Number(data.closedOrderNum || 0)
+        this.riskMetric = {
+          value: formatWarningIndex(closedOrderNum, allOrderNum),
+          label: '预警指数',
+          trend: `交易关闭数量/所有订单数量`
+        }
+      } catch (e) {
+        console.error('获取闲鱼售后预警与监控摘要失败', e)
+        this.riskMetric = { ...RISK_METRIC }
       }
     },
     formatRankingAmount,
@@ -640,7 +720,7 @@ export default {
     },
     handleResize() {
       this.updateScreenScale()
-      ;['avgPriceTrendInstance', 'rightsBarInstance', 'rightsLineInstance', 'pieInstance'].forEach(name => {
+      ;['payOrderTrendInstance', 'rightsBarInstance', 'rightsLineInstance', 'pieInstance'].forEach(name => {
         if (this[name]) this[name].resize()
       })
     },
@@ -652,9 +732,17 @@ export default {
       if (!this.selectedShop) {
         this.selectedShop = 'all'
       }
+      this.fetchOverviewMetrics()
+      this.fetchPayOrderTrend()
       this.fetchProductStatusDistribution()
       this.fetchTopStoreRanking()
+      this.fetchOrderRiskSummary()
       this.renderRightsLineChart()
+    },
+    handleRankingSortChange(sortBy) {
+      if (this.selectedRankingSort === sortBy) return
+      this.selectedRankingSort = sortBy
+      this.fetchTopStoreRanking()
     },
     rankBadgeClass(index) {
       if (index === 0) return 'gold'
@@ -663,7 +751,7 @@ export default {
       return 'rank-number'
     },
     disposeCharts() {
-      ;['avgPriceTrendInstance', 'rightsBarInstance', 'rightsLineInstance', 'pieInstance'].forEach(name => {
+      ;['payOrderTrendInstance', 'rightsBarInstance', 'rightsLineInstance', 'pieInstance'].forEach(name => {
         if (this[name]) {
           this[name].dispose()
           this[name] = null
@@ -671,37 +759,48 @@ export default {
       })
     },
     initCharts() {
-      this.initAvgPriceTrendChart()
+      this.initPayOrderTrendChart()
       this.initRightsBarChart()
       this.initRightsLineChart()
       this.initPieChart()
     },
-    initAvgPriceTrendChart() {
-      const chartDom = this.$refs.avgPriceTrendChartRef
+    initPayOrderTrendChart() {
+      const chartDom = this.$refs.payOrderTrendChartRef
       if (!chartDom) return
-      if (this.avgPriceTrendInstance) this.avgPriceTrendInstance.dispose()
-      this.avgPriceTrendInstance = markRaw(echarts.init(chartDom))
-      this.avgPriceTrendInstance.setOption({
+      if (this.payOrderTrendInstance) this.payOrderTrendInstance.dispose()
+      this.payOrderTrendInstance = markRaw(echarts.init(chartDom))
+      this.renderPayOrderTrendChart()
+    },
+    renderPayOrderTrendChart() {
+      if (!this.payOrderTrendInstance) return
+      this.payOrderTrendInstance.setOption({
         backgroundColor: 'transparent',
         grid: { left: 24, right: 12, top: 10, bottom: 22 },
         tooltip: {
           trigger: 'axis',
           backgroundColor: 'rgba(8, 18, 38, 0.95)',
           borderColor: 'rgba(245, 199, 103, 0.25)',
-          textStyle: { color: '#f7f1d2' }
+          textStyle: { color: '#f7f1d2' },
+          formatter: params => {
+            const current = params?.[0]
+            if (!current) return ''
+            return `${current.axisValue}<br/>支付订单数：${Number(current.data || 0).toLocaleString('zh-CN')}`
+          }
         },
         xAxis: {
           type: 'category',
           boundaryGap: false,
-          data: ['00', '04', '08', '12', '16', '20'],
+          data: this.payOrderTrend.labels,
           axisLine: { lineStyle: { color: 'rgba(245, 199, 103, 0.2)' } },
           axisTick: { show: false },
-          axisLabel: { color: '#a9a086', fontSize: 10 }
+          axisLabel: {
+            color: '#a9a086',
+            fontSize: 10,
+            interval: 2
+          }
         },
         yAxis: {
           type: 'value',
-          min: 240,
-          max: 320,
           splitNumber: 4,
           splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } },
           axisLine: { show: false },
@@ -711,9 +810,9 @@ export default {
         series: [{
           type: 'line',
           smooth: true,
-          data: [248, 262, 276, 271, 289, 280.17],
+          data: this.payOrderTrend.values,
           symbol: 'circle',
-          symbolSize: 6,
+          symbolSize: 5,
           lineStyle: { width: 3, color: '#ffd95d' },
           itemStyle: { color: '#ffd95d', borderColor: '#0b1830', borderWidth: 2 },
           areaStyle: {
@@ -1129,7 +1228,7 @@ export default {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr) 360px;
+  grid-template-columns: 372px minmax(0, 1fr) 348px;
   gap: 18px;
   margin-top: 8px;
 }
@@ -1145,7 +1244,7 @@ export default {
 
 .left-column {
   display: grid;
-  grid-template-rows: 1fr 250px;
+  grid-template-rows: minmax(0, 1.4fr) 210px;
 }
 
 .center-column {
@@ -1344,7 +1443,7 @@ export default {
 
 .mobile-trend-chart {
   width: 100%;
-  height: 96px;
+  height: 128px;
 }
 
 .stacked-panel {
@@ -1390,8 +1489,8 @@ export default {
 }
 
 .project-mode-value {
-  margin-top: 12px;
-  font-size: 52px;
+  margin-top: 8px;
+  font-size: 46px;
   line-height: 0.95;
   color: #ffe27e;
   text-shadow: 0 0 24px rgba(245, 199, 103, 0.12);
@@ -1671,6 +1770,41 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+.ranking-panel-title {
+  justify-content: space-between;
+}
+
+.ranking-sort-switch {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ranking-sort-button {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 218, 0, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(247, 239, 203, 0.78);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ranking-sort-button:hover {
+  border-color: rgba(255, 218, 0, 0.42);
+  color: #ffda00;
+}
+
+.ranking-sort-button.is-active {
+  border-color: rgba(255, 218, 0, 0.48);
+  background: rgba(255, 218, 0, 0.12);
+  color: #ffda00;
+  box-shadow: 0 0 10px rgba(255, 218, 0, 0.14);
 }
 
 .ranking-list {
