@@ -654,6 +654,9 @@ export default {
       this.initResizeObserver()
     })
     window.addEventListener('resize', this.handleResize)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', this.handleResize)
+    }
     document.addEventListener('dblclick', this.handleDoubleClick)
     document.addEventListener('keydown', this.handleEscapeKey)
   },
@@ -665,6 +668,9 @@ export default {
       this.resizeObserver = null
     }
     window.removeEventListener('resize', this.handleResize)
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', this.handleResize)
+    }
     document.removeEventListener('dblclick', this.handleDoubleClick)
     document.removeEventListener('keydown', this.handleEscapeKey)
     document.body.classList.remove('xgj-immersive-mode')
@@ -1520,6 +1526,15 @@ export default {
 .rights-panel {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.workflow-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: 14px;
 }
 
 .mobile-panel::before,
@@ -1555,10 +1570,12 @@ export default {
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 12px;
+  min-width: 0;
 }
 
 .panel-title-row .panel-title {
   margin-bottom: 0;
+  min-width: 0;
 }
 
 .section-title::before,
@@ -1786,6 +1803,17 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  flex: 1;
+  min-height: 0;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+.shop-flow-board::after {
+  content: '';
+  display: block;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .shop-flow-section {
@@ -1965,16 +1993,22 @@ export default {
   gap: 14px;
   flex: 1;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 .chart-monitor-block {
   min-height: 0;
+  min-width: 0;
   border-radius: 14px;
   border: 1px solid rgba(245, 199, 103, 0.16);
   background:
     linear-gradient(180deg, rgba(255, 249, 216, 0.04) 0%, transparent 18%),
     linear-gradient(180deg, rgba(12, 24, 46, 0.82) 0%, rgba(7, 18, 36, 0.88) 100%);
   padding: 12px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .chart-block-head {
@@ -1995,11 +2029,13 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .chart-filter-row--panel {
   flex-wrap: wrap;
   justify-content: flex-end;
+  max-width: 100%;
 }
 
 .chart-filter {
@@ -2031,6 +2067,9 @@ export default {
 
 .chart-canvas {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .chart-canvas--bar {
