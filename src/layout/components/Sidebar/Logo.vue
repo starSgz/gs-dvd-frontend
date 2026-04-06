@@ -34,10 +34,7 @@ const getLogoBackground = computed(() => {
   if (settingsStore.isDark) {
     return 'var(--sidebar-bg)';
   }
-  if (settingsStore.navType == 3) {
-    return '#FBF9F5'
-  }
-  return sideTheme.value === 'theme-dark' ? variables.menuBg : variables.menuLightBg;
+  return sideTheme.value === 'theme-dark' ? variables.menuBg : '#faf9f5';
 });
 
 // 获取Logo文字颜色

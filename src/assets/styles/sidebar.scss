@@ -104,10 +104,10 @@
 
     & .theme-dark .nest-menu .el-sub-menu>.el-sub-menu__title,
     & .theme-dark .el-sub-menu .el-menu-item {
-      background-color: vars.$base-sub-menu-background;
+      background-color: vars.$menuLightBg;
 
       &:hover {
-        background-color: vars.$base-sub-menu-hover !important;
+        background-color: vars.$menuLightHover !important;
       }
     }
   }
@@ -213,8 +213,7 @@
   .nest-menu .el-sub-menu>.el-sub-menu__title,
   .el-menu-item {
     &:hover {
-      // you can use $sub-menuHover
-      background-color: rgba(0, 0, 0, 0.06) !important;
+      background-color: vars.$menuLightHover !important;
     }
   }
 

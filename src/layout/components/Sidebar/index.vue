@@ -48,10 +48,7 @@ const getMenuBackground = computed(() => {
   if (settingsStore.isDark) {
     return 'var(--sidebar-bg)';
   }
-  if (settingsStore.navType == 3) {
-    return '#FBF9F5';
-  }
-  return sideTheme.value === 'theme-dark' ? variables.menuBg : variables.menuLightBg;
+  return sideTheme.value === 'theme-dark' ? variables.menuBg : '#faf9f5';
 });
 
 // 获取菜单文字颜色
@@ -87,7 +84,7 @@ const activeMenu = computed(() => {
     
     .el-menu-item, .el-sub-menu__title {
       &:hover {
-        background-color: var(--menu-hover, rgba(0, 0, 0, 0.06)) !important;
+        background-color: #f6f1e8 !important;
       }
     }
 
@@ -96,7 +93,7 @@ const activeMenu = computed(() => {
       
       &.is-active {
         color: var(--menu-active-text, #409eff);
-        background-color: var(--menu-hover, rgba(0, 0, 0, 0.06)) !important;
+        background-color: #f8f4ec !important;
       }
     }
 

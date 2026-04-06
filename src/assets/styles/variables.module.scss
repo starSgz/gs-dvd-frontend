@@ -11,11 +11,11 @@ $panGreen: #30B08F;
 // 默认主题变量
 $menuText: #5f5b53;
 $menuActiveText: #409eff;
-$menuBg: #F3EEE4;
+$menuBg: #FAF9F5;
 $menuHover: #E9E1D2;
 
 // 浅色主题theme-light
-$menuLightBg: #FBF9F5;
+$menuLightBg: #FAF9F5;
 $menuLightHover: #F6F1E8;
 $menuLightText: #303133;
 $menuLightActiveText: #409EFF;
@@ -27,8 +27,8 @@ $sideBarWidth: 200px;
 // 菜单暗色变量
 $base-menu-color: #5f5b53;
 $base-menu-color-active: #4a433b;
-$base-menu-background: #F3EEE4;
-$base-sub-menu-background: #EFE8DB;
+$base-menu-background: #FAF9F5;
+$base-sub-menu-background: #FAF9F5;
 $base-sub-menu-hover: #E6DDCC;
 
 // 组件变量
@@ -72,9 +72,9 @@ $--color-info: #909399;
   --sidebar-text: #{$menuText};
   --menu-hover: #{$menuHover};
   
-  --navbar-bg: #FBF9F5;
+  --navbar-bg: #FAF9F5;
   --navbar-text: #303133;
-  --tags-bg: #FBF9F5;
+  --tags-bg: #FAF9F5;
   
   /* splitpanes default-theme 变量 */
   --splitpanes-default-bg: #ffffff;
