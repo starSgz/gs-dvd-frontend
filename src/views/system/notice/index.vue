@@ -1,41 +1,45 @@
 <template>
-   <div class="app-container">
-      <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-         <el-form-item label="公告标题" prop="noticeTitle">
-            <el-input
-               v-model="queryParams.noticeTitle"
-               placeholder="请输入公告标题"
-               clearable
-               style="width: 200px"
-               @keyup.enter="handleQuery"
-            />
-         </el-form-item>
+   <div class="app-container" style="padding: 20px; background: #faf9f5;">
+      <SystemPageLayout title="公告列表" :total="total" :show-filter="showSearch">
+         <template #filter>
+      <el-form :model="queryParams" ref="queryRef" label-position="top" size="small" class="system-filter-form">
+         <div class="system-filter-grid" style="--system-grid-min: 220px;">
+          <el-form-item label="公告标题" prop="noticeTitle">
+             <el-input
+                v-model="queryParams.noticeTitle"
+                placeholder="请输入公告标题"
+                clearable
+                @keyup.enter="handleQuery"
+             />
+          </el-form-item>
          <el-form-item label="操作人员" prop="createBy">
             <el-input
-               v-model="queryParams.createBy"
-               placeholder="请输入操作人员"
-               clearable
-               style="width: 200px"
-               @keyup.enter="handleQuery"
-            />
-         </el-form-item>
-         <el-form-item label="类型" prop="noticeType">
-            <el-select v-model="queryParams.noticeType" placeholder="公告类型" clearable style="width: 200px">
-               <el-option
-                  v-for="dict in sys_notice_type"
-                  :key="dict.value"
+                v-model="queryParams.createBy"
+                placeholder="请输入操作人员"
+                clearable
+                @keyup.enter="handleQuery"
+             />
+          </el-form-item>
+          <el-form-item label="类型" prop="noticeType">
+             <el-select v-model="queryParams.noticeType" placeholder="公告类型" clearable>
+                <el-option
+                   v-for="dict in sys_notice_type"
+                   :key="dict.value"
                   :label="dict.label"
                   :value="dict.value"
                />
             </el-select>
          </el-form-item>
-         <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-         </el-form-item>
-      </el-form>
+          <div class="system-filter-actions">
+             <el-button class="system-ghost-button" @click="resetQuery">重置</el-button>
+             <el-button class="system-query-button" type="primary" @click="handleQuery">查询</el-button>
+          </div>
+         </div>
+       </el-form>
+       </template>
 
-      <el-row :gutter="10" class="mb8">
+      <template #toolbar>
+      <el-row :gutter="10" class="system-toolbar-row">
          <el-col :span="1.5">
             <el-button
                type="primary"
@@ -67,8 +71,10 @@
          </el-col>
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
+      </template>
 
-      <el-table v-loading="loading" :data="noticeList" @selection-change="handleSelectionChange">
+      <div class="system-table-wrap">
+      <el-table v-loading="loading" :data="noticeList" class="system-data-table" border @selection-change="handleSelectionChange">
          <el-table-column type="selection" width="55" align="center" />
          <el-table-column label="序号" align="center" prop="noticeId" width="100" />
          <el-table-column
@@ -96,11 +102,13 @@
          <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
             <template #default="scope">
                <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:notice:edit']">修改</el-button>
-               <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:notice:remove']" >删除</el-button>
-            </template>
-         </el-table-column>
-      </el-table>
+                <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:notice:remove']" >删除</el-button>
+             </template>
+          </el-table-column>
+       </el-table>
+       </div>
 
+      <template #footer>
       <pagination
          v-show="total > 0"
          :total="total"
@@ -108,6 +116,8 @@
          v-model:limit="queryParams.pageSize"
          @pagination="getList"
       />
+      </template>
+      </SystemPageLayout>
 
       <!-- 添加或修改公告对话框 -->
       <el-dialog :title="title" v-model="open" width="780px" append-to-body>
@@ -160,6 +170,7 @@
 
 <script setup name="Notice">
 import { listNotice, getNotice, delNotice, addNotice, updateNotice } from "@/api/system/notice";
+import SystemPageLayout from "@/components/SystemPageLayout";
 
 const { proxy } = getCurrentInstance();
 const { sys_notice_status, sys_notice_type } = proxy.useDict("sys_notice_status", "sys_notice_type");

@@ -1,56 +1,59 @@
 <template>
-   <div class="app-container">
-      <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-         <el-form-item label="参数名称" prop="configName">
-            <el-input
-               v-model="queryParams.configName"
-               placeholder="请输入参数名称"
-               clearable
-               style="width: 240px"
-               @keyup.enter="handleQuery"
-            />
-         </el-form-item>
+   <div class="app-container" style="padding: 20px; background: #faf9f5;">
+      <SystemPageLayout title="参数配置列表" :total="total" :show-filter="showSearch">
+         <template #filter>
+      <el-form :model="queryParams" ref="queryRef" label-position="top" size="small" class="system-filter-form">
+         <div class="system-filter-grid">
+          <el-form-item label="参数名称" prop="configName">
+             <el-input
+                v-model="queryParams.configName"
+                placeholder="请输入参数名称"
+                clearable
+                @keyup.enter="handleQuery"
+             />
+          </el-form-item>
          <el-form-item label="参数键名" prop="configKey">
             <el-input
-               v-model="queryParams.configKey"
-               placeholder="请输入参数键名"
-               clearable
-               style="width: 240px"
-               @keyup.enter="handleQuery"
-            />
-         </el-form-item>
+                v-model="queryParams.configKey"
+                placeholder="请输入参数键名"
+                clearable
+                @keyup.enter="handleQuery"
+             />
+          </el-form-item>
          <el-form-item label="系统内置" prop="configType">
             <el-select
-               v-model="queryParams.configType"
-               placeholder="系统内置"
-               clearable
-               style="width: 240px"
-            >
-               <el-option
-                  v-for="dict in sys_yes_no"
+                v-model="queryParams.configType"
+                placeholder="系统内置"
+                clearable
+             >
+                <el-option
+                   v-for="dict in sys_yes_no"
                   :key="dict.value"
                   :label="dict.label"
                   :value="dict.value"
                />
             </el-select>
          </el-form-item>
-         <el-form-item label="创建时间" style="width: 308px;">
-            <el-date-picker
-               v-model="dateRange"
-               value-format="YYYY-MM-DD"
+          <el-form-item label="创建时间" class="system-filter-span-2">
+             <el-date-picker
+                v-model="dateRange"
+                value-format="YYYY-MM-DD"
                type="daterange"
                range-separator="-"
                start-placeholder="开始日期"
                end-placeholder="结束日期"
             ></el-date-picker>
          </el-form-item>
-         <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-         </el-form-item>
-      </el-form>
+          <div class="system-filter-actions">
+             <el-button class="system-ghost-button" @click="resetQuery">重置</el-button>
+             <el-button class="system-query-button" type="primary" @click="handleQuery">查询</el-button>
+          </div>
+         </div>
+       </el-form>
+       </template>
 
-      <el-row :gutter="10" class="mb8">
+      <template #toolbar>
+      <el-row :gutter="10" class="system-toolbar-row">
          <el-col :span="1.5">
             <el-button
                type="primary"
@@ -100,8 +103,10 @@
          </el-col>
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
+      </template>
 
-      <el-table v-loading="loading" :data="configList" @selection-change="handleSelectionChange">
+      <div class="system-table-wrap">
+      <el-table v-loading="loading" :data="configList" class="system-data-table" border @selection-change="handleSelectionChange">
          <el-table-column type="selection" width="55" align="center" />
          <el-table-column label="参数主键" align="center" prop="configId" />
          <el-table-column label="参数名称" align="center" prop="configName" :show-overflow-tooltip="true" />
@@ -121,11 +126,13 @@
          <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
             <template #default="scope">
                <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:config:edit']" >修改</el-button>
-               <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:config:remove']">删除</el-button>
-            </template>
-         </el-table-column>
-      </el-table>
+                <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:config:remove']">删除</el-button>
+             </template>
+          </el-table-column>
+       </el-table>
+       </div>
 
+      <template #footer>
       <pagination
          v-show="total > 0"
          :total="total"
@@ -133,6 +140,8 @@
          v-model:limit="queryParams.pageSize"
          @pagination="getList"
       />
+      </template>
+      </SystemPageLayout>
 
       <!-- 添加或修改参数配置对话框 -->
       <el-dialog :title="title" v-model="open" width="500px" append-to-body>
@@ -171,6 +180,7 @@
 
 <script setup name="Config">
 import { listConfig, getConfig, delConfig, addConfig, updateConfig, refreshCache } from "@/api/system/config";
+import SystemPageLayout from "@/components/SystemPageLayout";
 
 const { proxy } = getCurrentInstance();
 const { sys_yes_no } = proxy.useDict("sys_yes_no");

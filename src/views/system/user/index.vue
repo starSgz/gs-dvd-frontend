@@ -1,23 +1,28 @@
 <template>
-  <div class="app-container">
-    <el-row :gutter="20">
+  <div class="app-container user-page">
+    <el-row :gutter="20" class="user-page-row">
       <splitpanes
         :horizontal="appStore.device === 'mobile'"
-        class="default-theme"
+        class="default-theme user-splitpanes"
       >
         <!--部门数据-->
-        <pane size="16">
-          <el-col>
-            <div class="head-container">
+        <pane size="16" class="user-nav-pane">
+          <el-col class="user-side-card">
+            <div class="user-side-header">
+              <div>
+                <h3 class="user-side-title">部门导航</h3>
+              </div>
+              <span class="user-side-badge">组织视图</span>
+            </div>
+            <div class="head-container user-side-search">
               <el-input
                 v-model="deptName"
                 placeholder="请输入部门名称"
                 clearable
                 prefix-icon="Search"
-                style="margin-bottom: 20px"
               />
             </div>
-            <div class="head-container">
+            <div class="head-container user-tree-panel">
               <el-tree
                 :data="deptOptions"
                 :props="{ label: 'label', children: 'children' }"
@@ -33,14 +38,15 @@
           </el-col>
         </pane>
         <!--用户数据-->
-        <pane size="84">
-          <el-col>
-            <el-form
+        <pane size="84" class="user-content-pane">
+          <el-col class="user-content-shell">
+            <section v-show="showSearch" class="user-filter-panel">
+              <el-form
               :model="queryParams"
               ref="queryRef"
               :inline="true"
-              v-show="showSearch"
               label-width="68px"
+              class="user-filter-form"
             >
               <el-form-item label="用户名称" prop="userName">
                 <el-input
@@ -91,9 +97,21 @@
                 >
                 <el-button icon="Refresh" @click="resetQuery">重置</el-button>
               </el-form-item>
-            </el-form>
+              </el-form>
+            </section>
 
-            <el-row :gutter="10" class="mb8">
+            <section class="user-content-card user-data-panel">
+              <div class="user-content-header">
+                <div>
+                  <h2 class="user-content-title">用户列表</h2>
+                </div>
+                <div class="user-page-meta">
+                  <span class="user-meta-pill">{{ currentDeptLabel }}</span>
+                  <span class="user-meta-pill user-meta-pill--primary">共 {{ total }} 条</span>
+                </div>
+              </div>
+
+            <el-row :gutter="10" class="mb8 user-toolbar-row">
               <el-col :span="1.5">
                 <el-button
                   type="primary"
@@ -156,6 +174,8 @@
             <el-table
               v-loading="loading"
               :data="userList"
+              class="user-data-table"
+              border
               @selection-change="handleSelectionChange"
             >
               <el-table-column type="selection" width="50" align="center" />
@@ -286,13 +306,16 @@
                 </template>
               </el-table-column>
             </el-table>
-            <pagination
-              v-show="total > 0"
-              :total="total"
-              v-model:page="queryParams.pageNum"
-              v-model:limit="queryParams.pageSize"
-              @pagination="getList"
-            />
+              <div class="user-pagination">
+                <pagination
+                  v-show="total > 0"
+                  :total="total"
+                  v-model:page="queryParams.pageNum"
+                  v-model:limit="queryParams.pageSize"
+                  @pagination="getList"
+                />
+              </div>
+            </section>
           </el-col>
         </pane>
       </splitpanes>
@@ -623,6 +646,29 @@ const data = reactive({
 
 const { queryParams, form, rules } = toRefs(data);
 
+const currentDeptLabel = computed(() => {
+  if (!queryParams.value.deptId) {
+    return "当前部门：全部";
+  }
+  const deptLabel = findDeptLabel(deptOptions.value, queryParams.value.deptId);
+  return `当前部门：${deptLabel || "未匹配"}`;
+});
+
+function findDeptLabel(tree = [], deptId) {
+  for (const item of tree || []) {
+    if (item.id === deptId) {
+      return item.label;
+    }
+    if (item.children && item.children.length) {
+      const childLabel = findDeptLabel(item.children, deptId);
+      if (childLabel) {
+        return childLabel;
+      }
+    }
+  }
+  return "";
+}
+
 /** 通过条件过滤节点  */
 const filterNode = (value, data) => {
   if (!value) return true;
@@ -899,3 +945,225 @@ onMounted(() => {
   });
 });
 </script>
+
+<style lang="scss" scoped>
+.user-page {
+  padding: 20px;
+  background: #faf9f5;
+}
+
+.user-page-row {
+  margin: 0 !important;
+  background: transparent;
+}
+
+.user-splitpanes {
+  min-height: calc(100vh - 180px);
+  height: calc(100vh - 180px);
+  background: transparent;
+}
+
+.user-page :deep(.splitpanes) {
+  background: transparent !important;
+}
+
+.user-page :deep(.splitpanes__pane) {
+  background: transparent !important;
+}
+
+.user-page :deep(.splitpanes__splitter) {
+  width: 14px;
+  background: transparent;
+  position: relative;
+}
+
+.user-page :deep(.splitpanes__splitter::before) {
+  content: "";
+  position: absolute;
+  inset: 16px 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(64, 158, 255, 0.18), rgba(64, 158, 255, 0.04));
+}
+
+.user-side-card,
+.user-content-card {
+  height: 100%;
+  background: #fff;
+  border: 1px solid #ece6db;
+  border-radius: 20px;
+  box-shadow: 0 14px 40px rgba(33, 24, 4, 0.05);
+  padding: 18px;
+  box-sizing: border-box;
+}
+
+.user-side-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-side-header,
+.user-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.user-side-title,
+.user-content-title {
+  margin: 0;
+  color: #2f2a3a;
+  font-size: 22px;
+  font-weight: 600;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.user-side-title {
+  font-size: 18px;
+}
+
+.user-side-desc,
+.user-content-desc {
+  margin: 6px 0 0;
+  color: #8b8498;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.user-side-badge,
+.user-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  min-height: 32px;
+  padding: 0 12px;
+  background: color-mix(in srgb, var(--el-color-primary) 10%, white);
+  color: var(--el-color-primary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.user-page-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.user-content-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: calc(100vh - 180px);
+  min-height: calc(100vh - 180px);
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.user-filter-panel {
+  background: #fff;
+  border: 1px solid #ece6db;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(33, 24, 4, 0.04);
+  padding: 18px;
+  flex: 0 0 auto;
+}
+
+.user-data-panel {
+  flex: 1;
+  min-height: 0;
+}
+
+.user-side-search {
+  margin-bottom: 14px;
+}
+
+.user-side-search :deep(.el-input__wrapper) {
+  min-height: 40px;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px #ebe5da inset;
+}
+
+.user-tree-panel {
+  flex: 1;
+  min-height: 0;
+  padding: 12px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #efe7d7;
+  overflow: auto;
+}
+
+.user-content-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-filter-form {
+  margin: 0;
+}
+
+.user-filter-form :deep(.el-form-item) {
+  margin-right: 16px;
+  margin-bottom: 12px;
+}
+
+.user-filter-form :deep(.el-input__wrapper),
+.user-filter-form :deep(.el-select__wrapper),
+.user-filter-form :deep(.el-date-editor.el-input__wrapper) {
+  min-height: 38px;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px #ebe5da inset;
+}
+
+.user-toolbar-row {
+  margin: 0 0 14px;
+}
+
+.user-toolbar-row :deep(.right-toolbar) {
+  margin-left: auto;
+}
+
+.user-data-table {
+  width: 100%;
+}
+
+.user-content-card :deep(.el-table) {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.user-content-card :deep(.el-table th.el-table__cell) {
+  background: #fcfaf6;
+  color: #5a5567;
+  font-weight: 600;
+}
+
+.user-content-card :deep(.el-table td.el-table__cell) {
+  padding: 12px 0;
+}
+
+.user-pagination {
+  margin-top: 14px;
+}
+
+@media (max-width: 992px) {
+  .user-side-card,
+  .user-content-card,
+  .user-content-shell,
+  .user-splitpanes {
+    min-height: auto;
+    height: auto;
+  }
+
+  .user-side-header,
+  .user-content-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+</style>

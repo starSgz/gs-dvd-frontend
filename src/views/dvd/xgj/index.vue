@@ -140,8 +140,8 @@
                   <div class="mobile-metric-compare">
                     <span class="mobile-metric-prev">{{ projectMetric.previous }}</span>
                     <span class="mobile-metric-divider">|</span>
-                    <span :class="projectMetric.trend === 'up' ? 'metric-up' : 'metric-down'">
-                      {{ projectMetric.trend === 'up' ? '↑' : '↓' }}{{ projectMetric.rate }}
+                    <span :class="projectMetric.trend === 'up' ? 'metric-up' : projectMetric.trend === 'down' ? 'metric-down' : 'metric-neutral'">
+                      {{ projectMetric.trend === 'up' ? '↑' : projectMetric.trend === 'down' ? '↓' : '' }}{{ projectMetric.rate }}
                     </span>
                   </div>
                   <div class="project-mode-note">{{ projectMetric.note }}</div>
@@ -381,12 +381,12 @@ const createEmptyDailyOrderAnalysis = () => ({
 })
 
 const PROJECT_METRIC = {
-  label: '项目进行中',
-  value: '95',
-  previous: '昨日: 105',
-  trend: 'down',
-  rate: '9.5%',
-  note: '重点项目仍在推进，处理效率保持稳定。'
+  label: '商品动销效率',
+  value: '0%',
+  previous: '快照: --',
+  trend: 'flat',
+  rate: '实时指标',
+  note: '按销售中 / (销售中 + 在售库存数) 计算。'
 }
 
 const RIGHTS_SHOP_DATA = [
@@ -517,6 +517,15 @@ const formatWarningIndex = (closedOrderNum, allOrderNum) => {
 }
 
 const formatFlowNumber = value => Number(value || 0).toLocaleString('zh-CN')
+
+const buildProjectMetric = payload => ({
+  label: '商品动销效率',
+  value: payload?.sellingEfficiency || '0%',
+  previous: `快照: ${payload?.latestCollectTime || '--'}`,
+  trend: 'flat',
+  rate: '实时指标',
+  note: '按销售中 / (销售中 + 在售库存数) 计算。'
+})
 
 export default {
   name: 'DvdXgjDashboard',
@@ -754,9 +763,11 @@ export default {
       try {
         const res = await getXgjProductStatusDistribution(this.getProductStatusQuery())
         this.productDistribution = buildProductDistributionFromStats(res.data?.stats || [])
+        this.projectMetric = buildProjectMetric(res.data || {})
       } catch (e) {
         console.error('获取闲鱼商品状态分布失败', e)
         this.productDistribution = createEmptyProductDistribution()
+        this.projectMetric = PROJECT_METRIC
       }
 
       this.$nextTick(() => {
@@ -836,24 +847,41 @@ export default {
         this.handleResize()
       })
     },
+    getBrowserZoomFactor() {
+      if (window.visualViewport && Number(window.visualViewport.scale) > 0) {
+        return Number(window.visualViewport.scale)
+      }
+
+      if (window.outerWidth && window.innerWidth) {
+        const outerZoomFactor = Number((window.outerWidth / window.innerWidth).toFixed(4))
+        if (outerZoomFactor > 0) {
+          return outerZoomFactor
+        }
+      }
+
+      return 1
+    },
     updateScreenScale() {
       const container = this.$refs.screenStageRef
       if (!container) return
       const { clientWidth, clientHeight } = container
       if (!clientWidth || !clientHeight) return
-      const widthScale = clientWidth / SCREEN_DESIGN_WIDTH
-      const heightScale = clientHeight / SCREEN_DESIGN_HEIGHT
+      const browserZoomFactor = this.getBrowserZoomFactor()
+      const effectiveClientWidth = clientWidth * browserZoomFactor
+      const effectiveClientHeight = clientHeight * browserZoomFactor
+      const widthScale = effectiveClientWidth / SCREEN_DESIGN_WIDTH
+      const heightScale = effectiveClientHeight / SCREEN_DESIGN_HEIGHT
       this.screenScale = Math.min(widthScale, heightScale)
 
       this.viewportHeight = SCREEN_DESIGN_HEIGHT
       this.viewportWidth = SCREEN_DESIGN_WIDTH
 
       if (widthScale > heightScale) {
-        this.viewportWidth = Math.round(clientWidth / this.screenScale)
+        this.viewportWidth = Math.round(effectiveClientWidth / this.screenScale)
       }
 
       if (widthScale > heightScale) {
-        this.viewportWidth = Math.round(clientWidth / this.screenScale)
+        this.viewportWidth = Math.round(effectiveClientWidth / this.screenScale)
       }
     },
     initResizeObserver() {
@@ -1534,7 +1562,40 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  container-type: inline-size;
+  --workflow-board-gap: 14px;
+  --workflow-board-tail-gap: 3px;
+  --workflow-section-radius: 16px;
+  --workflow-section-padding-y: 12px;
+  --workflow-section-padding-x: 12px;
+  --workflow-section-secondary-padding-top: 10px;
+  --workflow-section-secondary-padding-bottom: 8px;
+  --workflow-section-title-gap: 12px;
+  --workflow-section-title-gap-secondary: 8px;
+  --workflow-arrow-width-primary: 20px;
+  --workflow-arrow-width-secondary: 26px;
+  --workflow-arrow-margin: 4px;
+  --workflow-card-radius: 16px;
+  --workflow-card-padding-y: 10px;
+  --workflow-card-padding-x: 12px;
+  --workflow-card-padding-x-primary: 10px;
+  --workflow-card-padding-y-secondary: 8px;
+  --workflow-card-padding-x-secondary: 10px;
+  --workflow-card-min-height-primary: 84px;
+  --workflow-card-min-height-secondary: 84px;
+  --workflow-title-font-size: 12px;
+  --workflow-head-font-size: 12px;
+  --workflow-head-font-size-primary: 11px;
+  --workflow-icon-size: 24px;
+  --workflow-value-size-primary: 22px;
+  --workflow-value-size-secondary: 23px;
+  --workflow-desc-font-size: 11px;
+  --workflow-desc-font-size-secondary: 11px;
   padding-bottom: 14px;
+  overflow: hidden;
 }
 
 .mobile-panel::before,
@@ -1681,6 +1742,10 @@ export default {
   color: #70d46c;
 }
 
+.metric-neutral {
+  color: #d7c98b;
+}
+
 .mobile-trend-card {
   position: relative;
   z-index: 1;
@@ -1802,23 +1867,32 @@ export default {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--workflow-board-gap);
   flex: 1;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
   justify-content: flex-start;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .shop-flow-board::after {
   content: '';
   display: block;
-  height: 14px;
+  height: var(--workflow-board-tail-gap);
   flex-shrink: 0;
 }
 
 .shop-flow-section {
-  padding: 12px;
-  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--workflow-section-padding-y) var(--workflow-section-padding-x);
+  border-radius: var(--workflow-section-radius);
   border: 1px solid rgba(245, 199, 103, 0.14);
   background:
     linear-gradient(180deg, rgba(255, 247, 215, 0.05) 0%, rgba(255, 247, 215, 0) 24%),
@@ -1826,29 +1900,46 @@ export default {
   box-shadow:
     inset 0 0 18px rgba(255, 215, 0, 0.04),
     0 12px 28px rgba(0, 0, 0, 0.16);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .shop-flow-section--secondary {
+  flex: 1 0 auto;
   border-color: rgba(113, 204, 255, 0.14);
-  padding: 10px 12px;
+  padding:
+    var(--workflow-section-secondary-padding-top)
+    var(--workflow-section-padding-x)
+    var(--workflow-section-secondary-padding-bottom);
+}
+
+.shop-flow-section--secondary .shop-flow-track {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  align-items: center;
 }
 
 .shop-flow-section--primary {
-  padding: 10px 12px;
+  padding: 10px var(--workflow-section-padding-x);
 }
 
 .shop-flow-section--primary .shop-flow-section-title {
-  margin-bottom: 10px;
+  margin-bottom: calc(var(--workflow-section-title-gap) - 2px);
 }
 
 .shop-flow-section--primary .shop-flow-card {
-  min-height: 90px;
-  padding: 8px 12px;
+  min-height: var(--workflow-card-min-height-primary);
+  padding: 8px var(--workflow-card-padding-x-primary);
+}
+
+.shop-flow-section--primary .shop-flow-card-head {
+  font-size: var(--workflow-head-font-size-primary);
 }
 
 .shop-flow-section--primary .shop-flow-card-value {
   margin-top: 10px;
-  font-size: 24px;
+  font-size: var(--workflow-value-size-primary);
 }
 
 .shop-flow-section--primary .shop-flow-card-desc {
@@ -1856,46 +1947,58 @@ export default {
 }
 
 .shop-flow-section--secondary .shop-flow-section-title {
-  margin-bottom: 10px;
+  margin-bottom: var(--workflow-section-title-gap-secondary);
 }
 
 .shop-flow-section--secondary .shop-flow-card {
-  min-height: 88px;
-  padding: 8px 12px;
+  min-height: var(--workflow-card-min-height-secondary);
+  padding: var(--workflow-card-padding-y-secondary) var(--workflow-card-padding-x-secondary);
 }
 
 .shop-flow-section--secondary .shop-flow-card-value {
-  margin-top: 10px;
-  font-size: 24px;
+  margin-top: 8px;
+  font-size: var(--workflow-value-size-secondary);
 }
 
 .shop-flow-section--secondary .shop-flow-card-desc {
-  margin-top: 6px;
+  margin-top: 4px;
+  font-size: var(--workflow-desc-font-size-secondary);
 }
 
 .shop-flow-section-title {
-  margin-bottom: 12px;
+  margin-bottom: var(--workflow-section-title-gap);
   color: #f5e7ad;
-  font-size: 12px;
+  font-size: var(--workflow-title-font-size);
   font-weight: 600;
   letter-spacing: 0.08em;
+  line-height: 1.2;
 }
 
 .shop-flow-track {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) 26px minmax(0, 1fr) 26px minmax(0, 1fr);
+  grid-template-columns:
+    minmax(0, 1fr) var(--workflow-arrow-width-primary)
+    minmax(0, 1fr) var(--workflow-arrow-width-primary)
+    minmax(0, 1fr) var(--workflow-arrow-width-primary)
+    minmax(0, 1fr);
   align-items: center;
   gap: 0;
+  min-width: 0;
+  width: 100%;
 }
 
 .shop-flow-track--secondary {
-  grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) 26px minmax(0, 1fr);
+  grid-template-columns:
+    minmax(0, 1fr) var(--workflow-arrow-width-secondary)
+    minmax(0, 1fr) var(--workflow-arrow-width-secondary)
+    minmax(0, 1fr);
 }
 
 .shop-flow-arrow {
   position: relative;
   height: 2px;
-  margin: 0 4px;
+  margin: 0 var(--workflow-arrow-margin);
+  align-self: center;
   background: linear-gradient(90deg, rgba(255, 218, 0, 0.12) 0%, rgba(255, 218, 0, 0.72) 100%);
 }
 
@@ -1922,8 +2025,11 @@ export default {
 
 .shop-flow-card {
   min-height: 98px;
-  padding: 10px 12px;
-  border-radius: 16px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--workflow-card-padding-y) var(--workflow-card-padding-x);
+  border-radius: var(--workflow-card-radius);
   border: 1px solid rgba(255, 255, 255, 0.06);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%),
@@ -1953,28 +2059,39 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   color: #f6edcc;
-  font-size: 12px;
+  font-size: var(--workflow-head-font-size);
   font-weight: 600;
+  line-height: 1.2;
 }
 
 .shop-flow-card-icon {
-  width: 24px;
-  height: 24px;
+  width: var(--workflow-icon-size);
+  height: var(--workflow-icon-size);
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.08);
   color: #ffde72;
-  font-size: 12px;
+  font-size: var(--workflow-head-font-size);
   font-weight: 700;
+}
+
+.shop-flow-card-head > span:last-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .shop-flow-card-value {
   margin-top: 12px;
   color: #fff0a6;
-  font-size: 26px;
+  font-size: var(--workflow-value-size-primary);
   font-weight: 700;
   line-height: 1;
 }
@@ -1982,7 +2099,75 @@ export default {
 .shop-flow-card-desc {
   margin-top: 8px;
   color: rgba(242, 231, 187, 0.7);
-  font-size: 12px;
+  font-size: var(--workflow-desc-font-size);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@container (max-width: 880px) {
+  .workflow-panel {
+    --workflow-board-gap: 12px;
+    --workflow-section-radius: 14px;
+    --workflow-section-padding-y: 10px;
+    --workflow-section-padding-x: 10px;
+    --workflow-section-secondary-padding-top: 9px;
+    --workflow-section-secondary-padding-bottom: 7px;
+    --workflow-section-title-gap: 10px;
+    --workflow-section-title-gap-secondary: 7px;
+    --workflow-arrow-width-primary: 16px;
+    --workflow-arrow-width-secondary: 22px;
+    --workflow-arrow-margin: 3px;
+    --workflow-card-radius: 14px;
+    --workflow-card-padding-y: 8px;
+    --workflow-card-padding-x: 10px;
+    --workflow-card-padding-x-primary: 8px;
+    --workflow-card-padding-y-secondary: 7px;
+    --workflow-card-padding-x-secondary: 9px;
+    --workflow-card-min-height-primary: 76px;
+    --workflow-card-min-height-secondary: 76px;
+    --workflow-title-font-size: 11px;
+    --workflow-head-font-size: 11px;
+    --workflow-head-font-size-primary: 10px;
+    --workflow-icon-size: 22px;
+    --workflow-value-size-primary: 19px;
+    --workflow-value-size-secondary: 20px;
+    --workflow-desc-font-size: 11px;
+    --workflow-desc-font-size-secondary: 10px;
+  }
+}
+
+@container (max-width: 760px) {
+  .workflow-panel {
+    --workflow-board-gap: 10px;
+    --workflow-section-radius: 12px;
+    --workflow-section-padding-y: 8px;
+    --workflow-section-padding-x: 8px;
+    --workflow-section-secondary-padding-top: 8px;
+    --workflow-section-secondary-padding-bottom: 6px;
+    --workflow-section-title-gap: 8px;
+    --workflow-section-title-gap-secondary: 6px;
+    --workflow-arrow-width-primary: 12px;
+    --workflow-arrow-width-secondary: 18px;
+    --workflow-arrow-margin: 2px;
+    --workflow-card-radius: 12px;
+    --workflow-card-padding-y: 7px;
+    --workflow-card-padding-x: 8px;
+    --workflow-card-padding-x-primary: 6px;
+    --workflow-card-padding-y-secondary: 6px;
+    --workflow-card-padding-x-secondary: 8px;
+    --workflow-card-min-height-primary: 64px;
+    --workflow-card-min-height-secondary: 68px;
+    --workflow-title-font-size: 10px;
+    --workflow-head-font-size: 10px;
+    --workflow-head-font-size-primary: 9px;
+    --workflow-icon-size: 20px;
+    --workflow-value-size-primary: 16px;
+    --workflow-value-size-secondary: 17px;
+    --workflow-desc-font-size: 9px;
+    --workflow-desc-font-size-secondary: 9px;
+  }
 }
 
 .chart-monitor-panel {
@@ -2166,7 +2351,7 @@ export default {
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  padding: 18px 20px;
+  padding: 18px 20px 22px;
   border-radius: 18px;
   border: 1px solid rgba(255, 118, 118, 0.18);
   background:
@@ -2208,6 +2393,8 @@ export default {
   color: #ff9b9b;
   font-size: 12px;
   letter-spacing: 0.08em;
+  line-height: 1.5;
+  padding-left: 2px;
 }
 
 .ranking-panel {

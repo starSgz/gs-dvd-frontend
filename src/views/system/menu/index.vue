@@ -1,87 +1,98 @@
 <template>
-   <div class="app-container">
-      <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-         <el-form-item label="菜单名称" prop="menuName">
-            <el-input
-               v-model="queryParams.menuName"
-               placeholder="请输入菜单名称"
-               clearable
-               style="width: 200px"
-               @keyup.enter="handleQuery"
-            />
-         </el-form-item>
-         <el-form-item label="状态" prop="status">
-            <el-select v-model="queryParams.status" placeholder="菜单状态" clearable style="width: 200px">
-               <el-option
-                  v-for="dict in sys_normal_disable"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-               />
-            </el-select>
-         </el-form-item>
-         <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-         </el-form-item>
-      </el-form>
+   <div class="app-container" style="padding: 20px; background: #faf9f5;">
+      <SystemPageLayout title="菜单列表" :show-summary="false" :show-filter="showSearch">
+         <template #filter>
+            <el-form :model="queryParams" ref="queryRef" label-position="top" size="small" class="system-filter-form">
+               <div class="system-filter-grid" style="--system-grid-min: 220px;">
+                  <el-form-item label="菜单名称" prop="menuName">
+                     <el-input
+                        v-model="queryParams.menuName"
+                        placeholder="请输入菜单名称"
+                        clearable
+                        @keyup.enter="handleQuery"
+                     />
+                  </el-form-item>
+                  <el-form-item label="状态" prop="status">
+                     <el-select v-model="queryParams.status" placeholder="菜单状态" clearable>
+                        <el-option
+                           v-for="dict in sys_normal_disable"
+                           :key="dict.value"
+                           :label="dict.label"
+                           :value="dict.value"
+                        />
+                     </el-select>
+                  </el-form-item>
+                  <div class="system-filter-actions">
+                     <el-button class="system-ghost-button" @click="resetQuery">重置</el-button>
+                     <el-button class="system-query-button" type="primary" @click="handleQuery">查询</el-button>
+                  </div>
+               </div>
+            </el-form>
+         </template>
 
-      <el-row :gutter="10" class="mb8">
-         <el-col :span="1.5">
-            <el-button
-               type="primary"
-               plain
-               icon="Plus"
-               @click="handleAdd"
-               v-hasPermi="['system:menu:add']"
-            >新增</el-button>
-         </el-col>
-         <el-col :span="1.5">
-            <el-button 
-               type="info"
-               plain
-               icon="Sort"
-               @click="toggleExpandAll"
-            >展开/折叠</el-button>
-         </el-col>
-         <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-      </el-row>
+         <template #toolbar>
+            <el-row :gutter="10" class="system-toolbar-row">
+               <el-col :span="1.5">
+                  <el-button
+                     type="primary"
+                     plain
+                     icon="Plus"
+                     @click="handleAdd"
+                     v-hasPermi="['system:menu:add']"
+                  >新增</el-button>
+               </el-col>
+               <el-col :span="1.5">
+                  <el-button
+                     type="info"
+                     plain
+                     icon="Sort"
+                     @click="toggleExpandAll"
+                  >展开/折叠</el-button>
+               </el-col>
+               <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+            </el-row>
+         </template>
 
-      <el-table
-         v-if="refreshTable"
-         v-loading="loading"
-         :data="menuList"
-         row-key="menuId"
-         :default-expand-all="isExpandAll"
-         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-      >
-         <el-table-column prop="menuName" label="菜单名称" :show-overflow-tooltip="true" width="160"></el-table-column>
-         <el-table-column prop="icon" label="图标" align="center" width="100">
-            <template #default="scope">
-               <svg-icon :icon-class="scope.row.icon" />
-            </template>
-         </el-table-column>
-         <el-table-column prop="orderNum" label="排序" width="60"></el-table-column>
-         <el-table-column prop="perms" label="权限标识" :show-overflow-tooltip="true"></el-table-column>
-         <el-table-column prop="component" label="组件路径" :show-overflow-tooltip="true"></el-table-column>
-         <el-table-column prop="status" label="状态" width="80">
-            <template #default="scope">
-               <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
-            </template>
-         </el-table-column>
-         <el-table-column label="创建时间" align="center" width="160" prop="createTime">
-            <template #default="scope">
-               <span>{{ parseTime(scope.row.createTime) }}</span>
-            </template>
-         </el-table-column>
-         <el-table-column label="操作" align="center" width="210" class-name="small-padding fixed-width">
-            <template #default="scope">
-               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:menu:edit']">修改</el-button>
-               <el-button link type="primary" icon="Plus" @click="handleAdd(scope.row)" v-hasPermi="['system:menu:add']">新增</el-button>
-               <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:menu:remove']">删除</el-button>
-            </template>
-         </el-table-column>
-      </el-table>
+         <div class="system-table-wrap">
+            <el-table
+               v-if="refreshTable"
+               v-loading="loading"
+               :data="menuList"
+               row-key="menuId"
+               :default-expand-all="isExpandAll"
+               :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+               class="system-data-table"
+               border
+            >
+               <el-table-column prop="menuName" label="菜单名称" :show-overflow-tooltip="true" width="160"></el-table-column>
+               <el-table-column prop="icon" label="图标" align="center" width="100">
+                  <template #default="scope">
+                     <svg-icon :icon-class="scope.row.icon" />
+                  </template>
+               </el-table-column>
+               <el-table-column prop="orderNum" label="排序" width="60"></el-table-column>
+               <el-table-column prop="perms" label="权限标识" :show-overflow-tooltip="true"></el-table-column>
+               <el-table-column prop="component" label="组件路径" :show-overflow-tooltip="true"></el-table-column>
+               <el-table-column prop="status" label="状态" width="80">
+                  <template #default="scope">
+                     <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
+                  </template>
+               </el-table-column>
+               <el-table-column label="创建时间" align="center" width="160" prop="createTime">
+                  <template #default="scope">
+                     <span>{{ parseTime(scope.row.createTime) }}</span>
+                  </template>
+               </el-table-column>
+               <el-table-column label="操作" align="center" width="210" class-name="small-padding fixed-width">
+                  <template #default="scope">
+                     <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:menu:edit']">修改</el-button>
+                     <el-button link type="primary" icon="Plus" @click="handleAdd(scope.row)" v-hasPermi="['system:menu:add']">新增</el-button>
+                     <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:menu:remove']">删除</el-button>
+                  </template>
+               </el-table-column>
+            </el-table>
+         </div>
+      </SystemPageLayout>
 
       <!-- 添加或修改菜单对话框 -->
       <el-dialog :title="title" v-model="open" width="680px" append-to-body>
@@ -292,6 +303,7 @@
 import { addMenu, delMenu, getMenu, listMenu, updateMenu } from "@/api/system/menu";
 import SvgIcon from "@/components/SvgIcon";
 import IconSelect from "@/components/IconSelect";
+import SystemPageLayout from "@/components/SystemPageLayout";
 
 const { proxy } = getCurrentInstance();
 const { sys_show_hide, sys_normal_disable } = proxy.useDict("sys_show_hide", "sys_normal_disable");

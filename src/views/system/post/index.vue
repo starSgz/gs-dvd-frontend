@@ -1,113 +1,123 @@
 <template>
-   <div class="app-container">
-      <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-         <el-form-item label="岗位编码" prop="postCode">
-            <el-input
-               v-model="queryParams.postCode"
-               placeholder="请输入岗位编码"
-               clearable
-               style="width: 200px"
-               @keyup.enter="handleQuery"
+   <div class="app-container" style="padding: 20px; background: #faf9f5;">
+      <SystemPageLayout title="岗位列表" :total="total" :show-filter="showSearch">
+         <template #filter>
+            <el-form :model="queryParams" ref="queryRef" label-position="top" size="small" class="system-filter-form">
+               <div class="system-filter-grid" style="--system-grid-min: 220px;">
+                  <el-form-item label="岗位编码" prop="postCode">
+                     <el-input
+                        v-model="queryParams.postCode"
+                        placeholder="请输入岗位编码"
+                        clearable
+                        @keyup.enter="handleQuery"
+                     />
+                  </el-form-item>
+                  <el-form-item label="岗位名称" prop="postName">
+                     <el-input
+                        v-model="queryParams.postName"
+                        placeholder="请输入岗位名称"
+                        clearable
+                        @keyup.enter="handleQuery"
+                     />
+                  </el-form-item>
+                  <el-form-item label="状态" prop="status">
+                     <el-select v-model="queryParams.status" placeholder="岗位状态" clearable>
+                        <el-option
+                           v-for="dict in sys_normal_disable"
+                           :key="dict.value"
+                           :label="dict.label"
+                           :value="dict.value"
+                        />
+                     </el-select>
+                  </el-form-item>
+                  <div class="system-filter-actions">
+                     <el-button class="system-ghost-button" @click="resetQuery">重置</el-button>
+                     <el-button class="system-query-button" type="primary" @click="handleQuery">查询</el-button>
+                  </div>
+               </div>
+            </el-form>
+         </template>
+
+         <template #toolbar>
+            <el-row :gutter="10" class="system-toolbar-row">
+               <el-col :span="1.5">
+                  <el-button
+                     type="primary"
+                     plain
+                     icon="Plus"
+                     @click="handleAdd"
+                     v-hasPermi="['system:post:add']"
+                  >新增</el-button>
+               </el-col>
+               <el-col :span="1.5">
+                  <el-button
+                     type="success"
+                     plain
+                     icon="Edit"
+                     :disabled="single"
+                     @click="handleUpdate"
+                     v-hasPermi="['system:post:edit']"
+                  >修改</el-button>
+               </el-col>
+               <el-col :span="1.5">
+                  <el-button
+                     type="danger"
+                     plain
+                     icon="Delete"
+                     :disabled="multiple"
+                     @click="handleDelete"
+                     v-hasPermi="['system:post:remove']"
+                  >删除</el-button>
+               </el-col>
+               <el-col :span="1.5">
+                  <el-button
+                     type="warning"
+                     plain
+                     icon="Download"
+                     @click="handleExport"
+                     v-hasPermi="['system:post:export']"
+                  >导出</el-button>
+               </el-col>
+               <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+            </el-row>
+         </template>
+
+         <div class="system-table-wrap">
+            <el-table v-loading="loading" :data="postList" class="system-data-table" border @selection-change="handleSelectionChange">
+               <el-table-column type="selection" width="55" align="center" />
+               <el-table-column label="岗位编号" align="center" prop="postId" />
+               <el-table-column label="岗位编码" align="center" prop="postCode" />
+               <el-table-column label="岗位名称" align="center" prop="postName" />
+               <el-table-column label="岗位排序" align="center" prop="postSort" />
+               <el-table-column label="状态" align="center" prop="status">
+                  <template #default="scope">
+                     <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
+                  </template>
+               </el-table-column>
+               <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+                  <template #default="scope">
+                     <span>{{ parseTime(scope.row.createTime) }}</span>
+                  </template>
+               </el-table-column>
+               <el-table-column label="操作" width="180" align="center" class-name="small-padding fixed-width">
+                  <template #default="scope">
+                     <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:post:edit']">修改</el-button>
+                     <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:post:remove']">删除</el-button>
+                  </template>
+               </el-table-column>
+            </el-table>
+         </div>
+
+         <template #footer>
+            <pagination
+               v-show="total > 0"
+               :total="total"
+               v-model:page="queryParams.pageNum"
+               v-model:limit="queryParams.pageSize"
+               @pagination="getList"
             />
-         </el-form-item>
-         <el-form-item label="岗位名称" prop="postName">
-            <el-input
-               v-model="queryParams.postName"
-               placeholder="请输入岗位名称"
-               clearable
-               style="width: 200px"
-               @keyup.enter="handleQuery"
-            />
-         </el-form-item>
-         <el-form-item label="状态" prop="status">
-            <el-select v-model="queryParams.status" placeholder="岗位状态" clearable style="width: 200px">
-               <el-option
-                  v-for="dict in sys_normal_disable"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-               />
-            </el-select>
-         </el-form-item>
-         <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-         </el-form-item>
-      </el-form>
-
-      <el-row :gutter="10" class="mb8">
-         <el-col :span="1.5">
-            <el-button
-               type="primary"
-               plain
-               icon="Plus"
-               @click="handleAdd"
-               v-hasPermi="['system:post:add']"
-            >新增</el-button>
-         </el-col>
-         <el-col :span="1.5">
-            <el-button
-               type="success"
-               plain
-               icon="Edit"
-               :disabled="single"
-               @click="handleUpdate"
-               v-hasPermi="['system:post:edit']"
-            >修改</el-button>
-         </el-col>
-         <el-col :span="1.5">
-            <el-button
-               type="danger"
-               plain
-               icon="Delete"
-               :disabled="multiple"
-               @click="handleDelete"
-               v-hasPermi="['system:post:remove']"
-            >删除</el-button>
-         </el-col>
-         <el-col :span="1.5">
-            <el-button
-               type="warning"
-               plain
-               icon="Download"
-               @click="handleExport"
-               v-hasPermi="['system:post:export']"
-            >导出</el-button>
-         </el-col>
-         <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-      </el-row>
-
-      <el-table v-loading="loading" :data="postList" @selection-change="handleSelectionChange">
-         <el-table-column type="selection" width="55" align="center" />
-         <el-table-column label="岗位编号" align="center" prop="postId" />
-         <el-table-column label="岗位编码" align="center" prop="postCode" />
-         <el-table-column label="岗位名称" align="center" prop="postName" />
-         <el-table-column label="岗位排序" align="center" prop="postSort" />
-         <el-table-column label="状态" align="center" prop="status">
-            <template #default="scope">
-               <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
-            </template>
-         </el-table-column>
-         <el-table-column label="创建时间" align="center" prop="createTime" width="180">
-            <template #default="scope">
-               <span>{{ parseTime(scope.row.createTime) }}</span>
-            </template>
-         </el-table-column>
-         <el-table-column label="操作" width="180" align="center" class-name="small-padding fixed-width">
-            <template #default="scope">
-               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:post:edit']">修改</el-button>
-               <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:post:remove']">删除</el-button>
-            </template>
-         </el-table-column>
-      </el-table>
-
-      <pagination
-         v-show="total > 0"
-         :total="total"
-         v-model:page="queryParams.pageNum"
-         v-model:limit="queryParams.pageSize"
-         @pagination="getList"
-      />
+         </template>
+      </SystemPageLayout>
 
       <!-- 添加或修改岗位对话框 -->
       <el-dialog :title="title" v-model="open" width="500px" append-to-body>
@@ -146,6 +156,7 @@
 
 <script setup name="Post">
 import { listPost, addPost, delPost, getPost, updatePost } from "@/api/system/post";
+import SystemPageLayout from "@/components/SystemPageLayout";
 
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
