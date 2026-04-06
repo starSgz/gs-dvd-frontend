@@ -1,6 +1,9 @@
 <template>
-   <div class="app-container">
-      <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
+   <div class="app-container" style="padding: 20px; background: #faf9f5;">
+      <SystemPageLayout title="菜单管理" :show-filter="showSearch" :show-summary="false">
+      <template #filter>
+      <el-form :model="queryParams" ref="queryRef" class="system-filter-form">
+         <div class="system-filter-grid">
          <el-form-item label="菜单名称" prop="dvdConfigMenuName">
             <el-input
                v-model="queryParams.dvdConfigMenuName"
@@ -20,13 +23,17 @@
                />
             </el-select>
          </el-form-item>
-         <el-form-item>
+         <el-form-item class="system-filter-actions">
             <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
          </el-form-item>
-      </el-form>
+         </div>
+       </el-form>
+      </template>
 
-      <el-row :gutter="10" class="mb8">
+      <template #toolbar>
+      <div class="system-toolbar-row">
+       <el-row :gutter="10" class="mb8">
          <el-col :span="1.5">
             <el-button
                type="primary"
@@ -43,16 +50,21 @@
                @click="toggleExpandAll"
             >展开/折叠</el-button>
          </el-col>
-         <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-      </el-row>
+          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+       </el-row>
+      </div>
+      </template>
 
-      <el-table
-         v-if="refreshTable"
-         v-loading="loading"
-         :data="menuList"
-         row-key="dvdConfigMenuId"
-         :default-expand-all="isExpandAll"
-         :default-expanded-keys="expandedKeys"
+      <div class="system-table-wrap">
+       <el-table
+          v-if="refreshTable"
+          v-loading="loading"
+          :data="menuList"
+          class="system-data-table"
+          border
+          row-key="dvdConfigMenuId"
+          :default-expand-all="isExpandAll"
+          :default-expanded-keys="expandedKeys"
          :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
          :indent="20"
       >
@@ -116,7 +128,9 @@
                <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
             </template>
          </el-table-column>
-      </el-table>
+       </el-table>
+      </div>
+      </SystemPageLayout>
 
       <!-- 添加或修改菜单对话框 -->
       <el-dialog :title="title" v-model="open" width="680px" append-to-body>
@@ -206,6 +220,7 @@
 import { addConfigMenu, delConfigMenu, getConfigMenu, listConfigMenu, updateConfigMenu, treeselect } from "@/api/dvdConfig/configMenu";
 import ImageUpload from "@/components/ImageUpload";
 import SvgIcon from "@/components/SvgIcon";
+import SystemPageLayout from "@/components/SystemPageLayout";
 
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");

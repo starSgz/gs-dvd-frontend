@@ -1,6 +1,9 @@
 <template>
-  <div class="app-container">
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
+  <div class="app-container" style="padding: 20px; background: #faf9f5;">
+    <SystemPageLayout title="账号列表" :total="total" :show-filter="showSearch">
+      <template #filter>
+    <el-form :model="queryParams" ref="queryRef" class="system-filter-form">
+      <div class="system-filter-grid">
       <el-form-item label="平台" prop="platformId">
         <el-select v-model="queryParams.platformId" placeholder="请选择平台" clearable style="width: 200px">
           <el-option
@@ -37,12 +40,16 @@
           <el-option label="异常" :value="3" />
         </el-select>
       </el-form-item>
-      <el-form-item>
+      <el-form-item class="system-filter-actions">
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
+      </div>
     </el-form>
+      </template>
 
+      <template #toolbar>
+        <div class="system-toolbar-row">
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
@@ -72,8 +79,11 @@
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
+        </div>
+      </template>
 
-    <el-table v-loading="loading" :data="accountList" @selection-change="handleSelectionChange">
+      <div class="system-table-wrap">
+    <el-table v-loading="loading" :data="accountList" class="system-data-table" border @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="账号ID" align="center" prop="id" width="100" />
       <el-table-column label="平台" align="center" prop="platformId" width="150">
@@ -129,7 +139,9 @@
         </template>
       </el-table-column>
     </el-table>
+      </div>
 
+      <template #footer>
     <pagination
       v-show="total > 0"
       :total="total"
@@ -137,6 +149,8 @@
       v-model:limit="queryParams.pageSize"
       @pagination="getList"
     />
+      </template>
+    </SystemPageLayout>
 
     <!-- 添加或修改账号对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
@@ -255,6 +269,7 @@
 <script setup name="DvdAccount">
 import { listAccount, getAccount, addAccount, updateAccount, delAccount, getQRCode, checkQRCodeStatus, sendVerifyCode, submitVerifyCode } from "@/api/dvdAccount/account";
 import { treeselect } from "@/api/dvdConfig/configMenu";
+import SystemPageLayout from "@/components/SystemPageLayout";
 
 const { proxy } = getCurrentInstance();
 

@@ -1,7 +1,10 @@
 <template>
-   <div class="app-container">
+   <div class="app-container" style="padding: 20px; background: #faf9f5;">
+      <SystemPageLayout title="卡密管理" :total="total" :show-filter="showSearch">
+      <template #filter>
       <!-- 搜索表单 -->
-      <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="80px" class="search-form">
+      <el-form :model="queryParams" ref="queryRef" label-width="80px" class="system-filter-form search-form">
+         <div class="system-filter-grid">
          <el-form-item label="卡密" prop="accessKey">
             <el-input
                v-model="queryParams.accessKey"
@@ -43,11 +46,16 @@
                end-placeholder="结束日期"
             />
          </el-form-item>
-         <el-form-item>
+         <el-form-item class="system-filter-actions">
             <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
          </el-form-item>
+         </div>
       </el-form>
+      </template>
+
+      <template #toolbar>
+      <div class="system-toolbar-row">
 
       <!-- 操作按钮 -->
       <el-row :gutter="10" class="mb8">
@@ -72,9 +80,12 @@
          </el-col>
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
+      </div>
+      </template>
 
       <!-- 数据表格 -->
-      <el-table v-loading="loading" :data="accessKeyList" @selection-change="handleSelectionChange" border stripe>
+      <div class="system-table-wrap">
+      <el-table v-loading="loading" :data="accessKeyList" class="system-data-table" @selection-change="handleSelectionChange" border stripe>
          <el-table-column type="selection" width="55" align="center" />
          <el-table-column label="卡密" align="center" prop="accessKey" min-width="80" show-overflow-tooltip>
             <template #default="scope">
@@ -142,8 +153,10 @@
             </template>
          </el-table-column>
       </el-table>
+      </div>
 
       <!-- 分页 -->
+      <template #footer>
       <pagination
          v-show="total > 0"
          :total="total"
@@ -151,6 +164,8 @@
          v-model:limit="queryParams.pageSize"
          @pagination="getList"
       />
+      </template>
+      </SystemPageLayout>
 
       <!-- 新增卡密对话框 -->
       <el-dialog :title="title" v-model="open" width="580px" append-to-body destroy-on-close>
@@ -293,6 +308,7 @@
 
 <script setup name="ManageKey">
 import { listAccessKey, addAccessKey, updateAccessKey, delAccessKey, getAccessKey } from "@/api/dvdConfig/accessKey";
+import SystemPageLayout from "@/components/SystemPageLayout";
 
 const { proxy } = getCurrentInstance();
 
@@ -602,10 +618,10 @@ getList();
 
 <style scoped>
 .search-form {
-   padding: 18px 20px 0 20px;
-   background: var(--el-bg-color);
-   border-radius: 4px;
-   margin-bottom: 16px;
+   padding: 0;
+   background: transparent;
+   border-radius: 0;
+   margin-bottom: 0;
 }
 
 .key-cell {
